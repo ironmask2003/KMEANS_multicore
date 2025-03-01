@@ -269,9 +269,7 @@ __global__ void max_step(float* d_auxCentroids, int* d_pointsPerClass, float* d_
 	  int id = (blockIdx.x * blockDim.x) + threadIdx.x;
 
     if (id < d_K){
-        if(d_pointsPerClass[id] == 0){
-            return;
-        }
+        if(d_pointsPerClass[id] > 0){
         for(int j=0; j<d_samples; j++){
             d_auxCentroids[id*d_samples+j] /= d_pointsPerClass[id];
         }
@@ -279,6 +277,7 @@ __global__ void max_step(float* d_auxCentroids, int* d_pointsPerClass, float* d_
         float dist=d_euclideanDistance_sq(&d_centroids[id*d_samples], &d_auxCentroids[id*d_samples], d_samples);
         if(dist>*d_maxDist){
             *d_maxDist = dist;
+        }
         }
     }
 }
