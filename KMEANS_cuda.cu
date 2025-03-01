@@ -277,7 +277,7 @@ __global__ void max_step(float* d_auxCentroids, int* d_pointsPerClass, float* d_
         }
 
         float dist=d_euclideanDistance_sq(&d_centroids[id*d_samples], &d_auxCentroids[id*d_samples], d_samples);
-        if(dist>*maxDist){
+        if(dist>*d_maxDist){
             *d_maxDist = dist;
         }
     }
