@@ -190,7 +190,7 @@ __device__ float d_euclideanDistance(float *point, float *center, int samples)
 	float dist=0.0;
 	for(int i=0; i<samples; i++) 
 	{
-		dist = fmaf((point[i]-center[i]), (point[i]-center[i]), dist);
+		dist+= (point[i]-center[i])*(point[i]-center[i]);
 	}
 	return(dist);
 }
@@ -232,7 +232,13 @@ __global__ void assign_centroids(float* d_data, float* d_centroids, int* d_class
         float minDist = FLT_MAX;
         float dist = 0.0;
         for (int j = 0; j < d_K; j++) {
-            dist = d_euclideanDistance(&d_data[id * d_samples], &d_centroids[j * d_samples], d_samples);
+            float sum = 0.0f;
+            for (int i = 0; i < d_samples; ++i) {
+              float diff = d_data[id * d_samples + i] - d_centroids[j * d_samples + i];
+              sum += diff * diff;
+            }
+            dist = sqrtf(sum);
+
             if (dist < minDist) {
                 minDist = dist;
                 vclass = j + 1;
