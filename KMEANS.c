@@ -201,13 +201,6 @@ void zeroIntArray(int *array, int size)
 		array[i] = 0;	
 }
 
-// Funzione che scrive su un file il un valore preso in input
-void writeCompTimeToFile(char *filename, float value) {
-  FILE *fp;
-  fp = fopen(filename, "w");
-  fprintf(fp, "%f", value);
-  fclose(fp);
-}
 
 
 int main(int argc, char* argv[])
@@ -231,12 +224,11 @@ int main(int argc, char* argv[])
 	*          and the next, the maximum distance between centroids is less than this precision, the
 	*          algorithm stops.
 	* argv[6]: Output file. Class assigned to each point of the input file.
-  * argv[7]: File where save the computation time
 	* */
-	if(argc !=  8)
+	if(argc !=  7)
 	{
 		fprintf(stderr,"EXECUTION ERROR K-MEANS: Parameters are not correct.\n");
-		fprintf(stderr,"./KMEANS [Input Filename] [Number of clusters] [Number of iterations] [Number of changes] [Threshold] [Output data file] [Computation time file]\n");
+		fprintf(stderr,"./KMEANS [Input Filename] [Number of clusters] [Number of iterations] [Number of changes] [Threshold] [Output data file]\n");
 		fflush(stderr);
 		exit(-1);
 	}
@@ -281,10 +273,10 @@ int main(int argc, char* argv[])
 		exit(-4);
 	}
 
-	// Initial centrodis with a randomic number
+	// Initial centrodis
 	srand(0);
 	int i;
-	for(i=0; i<K; i++)
+	for(i=0; i<K; i++) 
 		centroidPos[i]=rand()%lines;
 	
 	// Loading the array of initial centroids with the data from the array data
@@ -382,9 +374,9 @@ int main(int argc, char* argv[])
 		
 		maxDist=FLT_MIN;
 		for(i=0; i<K; i++){
-			dist=euclideanDistance(&centroids[i*samples], &auxCentroids[i*samples], samples);
-			if(dist>maxDist) {
-				maxDist=dist;
+			distCentroids[i]=euclideanDistance(&centroids[i*samples], &auxCentroids[i*samples], samples);
+			if(distCentroids[i]>maxDist) {
+				maxDist=distCentroids[i];
 			}
 		}
 		memcpy(centroids, auxCentroids, (K*samples*sizeof(float)));
@@ -405,7 +397,6 @@ int main(int argc, char* argv[])
 	//END CLOCK*****************************************
 	end = clock();
 	printf("\nComputation: %f seconds", (double)(end - start) / CLOCKS_PER_SEC);
-  writeCompTimeToFile(argv[7], (double)(end - start) / CLOCKS_PER_SEC);
 	fflush(stdout);
 	//**************************************************
 	//START CLOCK***************************************
