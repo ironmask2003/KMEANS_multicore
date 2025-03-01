@@ -254,6 +254,17 @@ __global__ void assign_centroids(float* d_data, float* d_centroids, int* d_class
     atomicAdd(d_changes, changes);
 }
 
+__device__ inline float custom_atomic_max(float *value_address, float val)
+{
+    int *address_as_int = (int *)value_address;
+    int old = *address_as_int, assumed;
+    do {
+        assumed = old;
+        old = atomicCAS(address_as_int, assumed, __float_as_int(fmaxf(val, __int_as_float(assumed))));
+    } while (assumed != old);
+    return __int_as_float(old);
+}
+
 __global__ void max_step(float* d_auxCentroids, int* d_pointsPerClass, float* d_centroids, float* d_maxDist){
 	  int id = (blockIdx.x * blockDim.x) + threadIdx.x;
 
@@ -263,10 +274,7 @@ __global__ void max_step(float* d_auxCentroids, int* d_pointsPerClass, float* d_
         }
 
         float dist=d_euclideanDistance(&d_centroids[id*d_samples], &d_auxCentroids[id*d_samples], d_samples);
-		  if(dist>*d_maxDist) {
-            *d_maxDist=dist;
-        }
-
+        custom_atomic_max(d_maxDist, dist);
     }
 }
 
