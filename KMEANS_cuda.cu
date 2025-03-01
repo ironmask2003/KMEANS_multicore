@@ -235,8 +235,8 @@ __global__ void assign_centroids(float* d_data, float* d_centroids, int* d_class
     if (id < d_lines) {
         int vclass = 1;
         float minDist = FLT_MAX;
+        float dist = 0.0;
         for (int j = 0; j < d_K; j++) {
-            float dist = 0.0;
             dist = d_euclideanDistance(&d_data[id * d_samples], &d_centroids[j * d_samples], d_samples);
             if (dist < minDist) {
                 minDist = dist;
@@ -244,7 +244,7 @@ __global__ void assign_centroids(float* d_data, float* d_centroids, int* d_class
             }
         }
         if (d_classMap[id] != vclass) {
-            atomicAdd(d_changes, 1);
+            atomicAdd(&d_changes, 1);
         }
         d_classMap[id] = vclass;
     }
