@@ -232,6 +232,8 @@ __global__ void assign_centroids(float* d_data, float* d_centroids, int* d_class
     int blockSize = blockDim.x * blockDim.y;
     int id = blockIdx.x * blockSize + tid;
 
+    int changes = 0;
+
     if (id < d_lines) {
         int vclass = 1;
         float minDist = FLT_MAX;
@@ -244,10 +246,12 @@ __global__ void assign_centroids(float* d_data, float* d_centroids, int* d_class
             }
         }
         if (d_classMap[id] != vclass) {
-            atomicAdd(&d_changes, 1);
+            atomicAdd(&changes, 1);
         }
         d_classMap[id] = vclass;
     }
+
+    atomicAdd(d_changes, changes);
 }
 
 __global__ void second_step(float* d_data, int* d_pointsPerClass, float* d_auxCentroids, int* d_classMap){
