@@ -195,17 +195,6 @@ __device__ float d_euclideanDistance(float *point, float *center, int samples)
 	return(dist);
 }
 
-__device__ float d_euclideanDistance_sq(float *point, float *center, int samples)
-{
-	float dist=0.0;
-	for(int i=0; i<samples; i++) 
-	{
-		dist+= (point[i]-center[i])*(point[i]-center[i]);
-	}
-  dist = sqrt(dist);
-	return(dist);
-}
-
 /*
 Function zeroFloatMatriz: Set matrix elements to 0
 This function could be modified
@@ -238,8 +227,6 @@ __constant__ int d_lines;
 __global__ void assign_centroids(float* d_data, float* d_centroids, int* d_classMap, int* d_changes, int* d_pointsPerClass, float* d_auxCentroids){
 	  int id = (blockIdx.x * blockDim.x) + threadIdx.x;
 
-    int changes = 0;
-
     if (id < d_lines) {
         int vclass = 1;
         float minDist = FLT_MAX;
@@ -252,7 +239,7 @@ __global__ void assign_centroids(float* d_data, float* d_centroids, int* d_class
             }
         }
         if (d_classMap[id] != vclass) {
-            changes += 1;
+            atomicAdd(d_changes, 1);
         }
         d_classMap[id] = vclass;
 
@@ -261,8 +248,6 @@ __global__ void assign_centroids(float* d_data, float* d_centroids, int* d_class
             atomicAdd(&d_auxCentroids[(vclass-1)*d_samples+j], d_data[id*d_samples+j]);
         }
     }
-
-    atomicAdd(d_changes, changes);
 }
 
 __global__ void max_step(float* d_auxCentroids, int* d_pointsPerClass, float* d_centroids, float* d_maxDist){
@@ -274,7 +259,7 @@ __global__ void max_step(float* d_auxCentroids, int* d_pointsPerClass, float* d_
             d_auxCentroids[id*d_samples+j] /= d_pointsPerClass[id];
         }
 
-        float dist=d_euclideanDistance_sq(&d_centroids[id*d_samples], &d_auxCentroids[id*d_samples], d_samples);
+        float dist=d_euclideanDistance(&d_centroids[id*d_samples], &d_auxCentroids[id*d_samples], d_samples);
         if(dist>*d_maxDist){
             *d_maxDist = dist;
         }
