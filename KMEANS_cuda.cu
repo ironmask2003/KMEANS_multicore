@@ -195,6 +195,17 @@ __device__ float d_euclideanDistance(float *point, float *center, int samples)
 	return(dist);
 }
 
+__device__ float d_euclideanDistance_sq(float *point, float *center, int samples)
+{
+	float dist=0.0;
+	for(int i=0; i<samples; i++) 
+	{
+		dist+= (point[i]-center[i])*(point[i]-center[i]);
+	}
+  dist = sqrt(dist);
+	return(dist);
+}
+
 /*
 Function zeroFloatMatriz: Set matrix elements to 0
 This function could be modified
@@ -273,7 +284,7 @@ __global__ void max_step(float* d_auxCentroids, int* d_pointsPerClass, float* d_
             d_auxCentroids[id*d_samples+j] /= d_pointsPerClass[id];
         }
 
-        float dist=d_euclideanDistance(&d_centroids[id*d_samples], &d_auxCentroids[id*d_samples], d_samples);
+        float dist=d_euclideanDistance_sq(&d_centroids[id*d_samples], &d_auxCentroids[id*d_samples], d_samples);
         custom_atomic_max(d_maxDist, dist);
     }
 }
