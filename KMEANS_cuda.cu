@@ -246,7 +246,7 @@ __global__ void assign_centroids(float* d_data, float* d_centroids, int* d_class
             }
         }
         if (d_classMap[id] != vclass) {
-            changes += 1
+            changes += 1;
         }
         d_classMap[id] = vclass;
     }
