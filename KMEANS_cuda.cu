@@ -403,7 +403,7 @@ int main(int argc, char* argv[])
     // Memory allocation on the device
     CHECK_CUDA_CALL( cudaMalloc(&d_data, lines*samples*sizeof(float)) );
     CHECK_CUDA_CALL( cudaMalloc(&d_classMap, lines*sizeof(int)) );
-    CHECK_CUDA_CALL( cudaMalloc(&d_centroids, K*samples*sizeof(float) );
+    CHECK_CUDA_CALL( cudaMalloc(&d_centroids, K*samples*sizeof(float)) );
     CHECK_CUDA_CALL( cudaMalloc(&d_pointsPerClass, K*sizeof(int)) );
     CHECK_CUDA_CALL( cudaMalloc(&d_auxCentroids, K*samples*sizeof(float)) );
     CHECK_CUDA_CALL( cudaMalloc(&d_maxDist, sizeof(float)) );
