@@ -508,14 +508,15 @@ int main(int argc, char* argv[])
 	free(pointsPerClass);
 	free(auxCentroids);
 
-    // Free cuda memory
-    CHECK_CUDA_CALL( cudaFree(d_data) );
-    CHECK_CUDA_CALL( cudaFree(d_classMap) );
-    CHECK_CUDA_CALL( cudaFree(d_centroids) );
-    CHECK_CUDA_CALL( cudaFree(d_pointsPerClass) );
-    CHECK_CUDA_CALL( cudaFree(d_auxCentroids) );
-    CHECK_CUDA_CALL( cudaFree(d_maxDist) );
-    CHECK_CUDA_CALL( cudaFree(d_changes) );
+  // Free cuda memory
+  CHECK_CUDA_CALL( cudaFree(d_data) );
+  CHECK_CUDA_CALL( cudaFree(d_classMap) );
+  CHECK_CUDA_CALL( cudaFree(d_centroids) );
+  CHECK_CUDA_CALL( cudaFree(d_pointsPerClass) );
+  CHECK_CUDA_CALL( cudaFree(d_auxCentroids) );
+  CHECK_CUDA_CALL( cudaFree(d_maxDist) );
+  CHECK_CUDA_CALL( cudaFree(d_changes) );
+  CHECK_CUDA_CALL( cudaFree(d_distCentroids) );
 
 	//END CLOCK*****************************************
 	end = omp_get_wtime();
