@@ -397,8 +397,8 @@ int main(int argc, char* argv[])
     CHECK_CUDA_CALL( cudaMemcpyToSymbol(d_lines, &lines, sizeof(int)) );
 
     // Creation of the variables on the device
-    float *d_data, *d_centroids, d_maxDist, d_distCentroids, d_auxCentroids;
-    int *d_classMap, *d_pointsPerClass, *d_changes;
+    float* d_data, d_centroids, d_maxDist, d_distCentroids, d_auxCentroids;
+    int* d_classMap, d_pointsPerClass, d_changes;
 
     // Memory allocation on the device
     CHECK_CUDA_CALL( cudaMalloc(&d_data, lines*samples*sizeof(float)) );
