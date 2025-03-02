@@ -15,7 +15,7 @@ MPICC=mpicc
 CUDACC=nvcc
 
 # Flags for optimization and libs
-FLAGS=-O3 -mavx2 -Wall
+FLAGS=-O3 -Wall
 LIBS=-lm
 
 # Targets to build
@@ -44,9 +44,6 @@ KMEANS_seq: KMEANS.c
 	$(CC) $(FLAGS) $(DEBUG) $< $(LIBS) -o $@
 
 KMEANS_omp: KMEANS_omp.c
-	$(CC) $(FLAGS) $(DEBUG) $(OMPFLAG) $< $(LIBS) -o $@
-
-KMEANS_omp_mac: KMEANS_omp.c
 	$(CC)-14 $(FLAGS) $(DEBUG) $(OMPFLAG) $< $(LIBS) -o $@
 
 KMEANS_mpi: KMEANS_mpi.c

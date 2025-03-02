@@ -345,16 +345,17 @@ int main(int argc, char* argv[])
 
 	do{
 		it++;
-	
 		//1. Calculate the distance from each point to the centroid
 		//Assign each point to the nearest centroid.
 		changes = 0;
+		zeroIntArray(pointsPerClass,K);
+		zeroFloatMatriz(auxCentroids,K,samples);
 
-		#pragma omp parallel for private(class, dist, j, minDist) shared(classMap) reduction(+:changes) schedule(guided)
+		#pragma omp parallel for private(class, dist, j, minDist) shared(classMap) reduction(+:changes) reduction(+:auxCentroids[:K*samples], pointsPerClass[:K])
 		for(i=0; i<lines; i++){
 			class=1;
 			minDist=FLT_MAX;
-			
+
 			for(j=0; j<K; j++){
 				dist = euclideanDistance(&data[i*samples], &centroids[j*samples], samples);
 				if(dist < minDist){
@@ -367,47 +368,32 @@ int main(int argc, char* argv[])
 				changes++;
 			}
 			classMap[i]=class;
-		}
 
-		// temp = omp_get_wtime() - start;
-		// printf("%lf\n", temp);
-
-		// 2. Recalculates the centroids: calculates the mean within each cluster
-		zeroIntArray(pointsPerClass,K);
-		zeroFloatMatriz(auxCentroids,K,samples);
-
-		#pragma omp parallel for private(class, j) reduction(+:auxCentroids[:K*samples], pointsPerClass[:K])
-		for(i=0; i<lines; i++)
-		{
-			class=classMap[i];
-			pointsPerClass[class-1]++;
+      pointsPerClass[class-1]++;
 			for(j=0; j<samples; j++){
 				auxCentroids[(class-1)*samples+j] += data[i*samples+j];
 			}
 		}
 
-		#pragma omp for collapse(2)
+		maxDist=FLT_MIN;
+		#pragma omp parallel for reduction(max:maxDist)
 		for(i=0; i<K; i++) 
 		{
 			for(j=0; j<samples; j++){
 				auxCentroids[i*samples+j] /= pointsPerClass[i];
-			} 
-		}
+			}
 
-		maxDist=FLT_MIN;
-		#pragma omp parallel for private(dist) reduction(max:maxDist)
-		for(i=0; i<K; i++){
-			dist = euclideanDistance(&centroids[i*samples], &auxCentroids[i*samples], samples);
-			distCentroids[i] = dist;
+      distCentroids[i] = euclideanDistance(&centroids[i*samples], &auxCentroids[i*samples], samples);
 			if(distCentroids[i]>maxDist) {
 				maxDist=distCentroids[i];
 			}
+
 		}
 
-		memcpy(centroids, auxCentroids, (K*samples*sizeof(float)));
-		
-		sprintf(line,"\n[%d] Cluster changes: %d\tMax. centroid distance: %f", it, changes, maxDist);
-		outputMsg = strcat(outputMsg,line);
+    memcpy(centroids, auxCentroids, (K*samples*sizeof(float)));
+  
+    sprintf(line,"\n[%d] Cluster changes: %d\tMax. centroid distance: %f", it, changes, maxDist);
+    outputMsg = strcat(outputMsg,line);
 
 	} while((changes>minChanges) && (it<maxIterations) && (maxDist>maxThreshold));
 
