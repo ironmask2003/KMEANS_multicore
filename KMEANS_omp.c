@@ -176,7 +176,7 @@ float euclideanDistance(float *point, float *center, int samples)
 	{
 		num1 = point[i];
 		num2 = center[i];
-		dist += (num1 - num2)*(num1 - num2);
+		dist = fmaf((num1 - num2), (num1 - num2), dist);
 	}
 	dist = sqrt(dist);
 	return(dist);

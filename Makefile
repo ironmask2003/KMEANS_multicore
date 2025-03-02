@@ -46,6 +46,9 @@ KMEANS_seq: KMEANS.c
 KMEANS_omp: KMEANS_omp.c
 	$(CC) $(FLAGS) $(DEBUG) $(OMPFLAG) $< $(LIBS) -o $@
 
+KMEANS_omp_mac: KMEANS_omp.c
+	$(CC)-14 $(FLAGS) $(DEBUG) $(OMPFLAG) $< $(LIBS) -o $@
+
 KMEANS_mpi: KMEANS_mpi.c
 	$(MPICC) $(FLAGS) $(DEBUG) $< $(LIBS) -o $@
 
