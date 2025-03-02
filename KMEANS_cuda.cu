@@ -24,12 +24,18 @@
 #include <omp.h>
 #include <cuda.h>
 
+
 #define MAXLINE 2000
 #define MAXCAD 200
 
+//Macros
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 
+/*
+ * Macros to show errors when calling a CUDA library function,
+ * or after launching a kernel
+ */
 #define CHECK_CUDA_CALL( a )	{ \
 	cudaError_t ok = a; \
 	if ( ok != cudaSuccess ) \
@@ -41,6 +47,9 @@
 		fprintf(stderr, "-- Error CUDA last in line %d: %s\n", __LINE__, cudaGetErrorString( ok ) ); \
 	}
 
+/* 
+Function showFileError: It displays the corresponding error during file reading.
+*/
 void showFileError(int error, char* filename)
 {
 	printf("Error\n");
@@ -60,6 +69,9 @@ void showFileError(int error, char* filename)
 	fflush(stderr);	
 }
 
+/* 
+Function readInput: It reads the file to determine the number of rows and columns.
+*/
 int readInput(char* filename, int *lines, int *samples)
 {
     FILE *fp;
@@ -98,7 +110,10 @@ int readInput(char* filename, int *lines, int *samples)
 	}
 }
 
-int readInput2(char* filename, double* data)
+/* 
+Function readInput2: It loads data from file.
+*/
+int readInput2(char* filename, float* data)
 {
     FILE *fp;
     char line[MAXLINE] = "";
@@ -123,10 +138,13 @@ int readInput2(char* filename, double* data)
     }
     else
 	{
-    	return -2; 
+    	return -2; //No file found
 	}
 }
 
+/* 
+Function writeResult: It writes in the output file the cluster of each sample (point).
+*/
 int writeResult(int *classMap, int lines, const char* filename)
 {	
     FILE *fp;
@@ -143,33 +161,46 @@ int writeResult(int *classMap, int lines, const char* filename)
     }
     else
 	{
-    	return -3; 
+    	return -3; //No file found
 	}
 }
 
-void initCentroids(const double *data, double* centroids, int* centroidPos, int samples, int K)
+/*
+
+Function initCentroids: This function copies the values of the initial centroids, using their 
+position in the input data structure as a reference map.
+*/
+void initCentroids(const float *data, float* centroids, int* centroidPos, int samples, int K)
 {
 	int i;
 	int idx;
 	for(i=0; i<K; i++)
 	{
 		idx = centroidPos[i];
-		memcpy(&centroids[i*samples], &data[idx*samples], (samples*sizeof(double)));
+		memcpy(&centroids[i*samples], &data[idx*samples], (samples*sizeof(float)));
 	}
 }
 
-__device__ double d_euclideanDistance(double *point, double *center, int samples)
+/*
+Function euclideanDistance: Euclidean distance
+This function could be modified
+*/
+__device__ float d_euclideanDistance(float *point, float *center, int samples)
 {
-	double dist=0.0;
+	float dist=0.0;
 	for(int i=0; i<samples; i++) 
 	{
-		dist += (point[i]-center[i]) * (point[i]-center[i]);
+		dist = fmaf((point[i]-center[i]), (point[i]-center[i]), dist);
 	}
   sqrt(dist);
   return(dist);
 }
 
-void zeroFloatMatriz(double *matrix, int rows, int columns)
+/*
+Function zeroFloatMatriz: Set matrix elements to 0
+This function could be modified
+*/
+void zeroFloatMatriz(float *matrix, int rows, int columns)
 {
 	int i,j;
 	for (i=0; i<rows; i++)
@@ -177,6 +208,10 @@ void zeroFloatMatriz(double *matrix, int rows, int columns)
 			matrix[i*columns+j] = 0.0;	
 }
 
+/*
+Function zeroIntArray: Set array elements to 0
+This function could be modified
+*/
 void zeroIntArray(int *array, int size)
 {
 	int i;
@@ -184,25 +219,21 @@ void zeroIntArray(int *array, int size)
 		array[i] = 0;	
 }
 
+// Costanti
 __constant__ int d_samples;
 __constant__ int d_K;
 __constant__ int d_lines;
 
-__global__ void assign_centroids(double* d_data, double* d_centroids, int* d_classMap, int* d_changes, int* d_pointsPerClass, double* d_auxCentroids){
+// Kernel per il calcolo della distanza euclidea
+__global__ void assign_centroids(float* d_data, float* d_centroids, int* d_classMap, int* d_changes, int* d_pointsPerClass, float* d_auxCentroids){
 	  int id = (blockIdx.x * blockDim.x) + threadIdx.x;
 
     if (id < d_lines) {
         int vclass = 1;
-        double minDist = DBL_MAX;
-        double dist = 0.0;
+        float minDist = FLT_MAX;
+        float dist = 0.0;
         for (int j = 0; j < d_K; j++) {
-            double sum = 0.0;
-            for (int i = 0; i < d_samples; ++i) {
-              double diff = d_data[id * d_samples + i] - d_centroids[j * d_samples + i];
-              sum += diff * diff;
-            }
-            dist = sqrt(sum);
-
+            dist = d_euclideanDistance(&d_data[id*d_samples], &d_centroids[j*d_samples], d_samples);
             if (dist < minDist) {
                 minDist = dist;
                 vclass = j + 1;
@@ -220,7 +251,7 @@ __global__ void assign_centroids(double* d_data, double* d_centroids, int* d_cla
     }
 }
 
-__global__ void max_step(double* d_auxCentroids, int* d_pointsPerClass, double* d_centroids, double* d_maxDist, double* d_distCentroids){
+__global__ void max_step(float* d_auxCentroids, int* d_pointsPerClass, float* d_centroids, float* d_maxDist, float* d_distCentroids){
 	  int id = (blockIdx.x * blockDim.x) + threadIdx.x;
 
     if (id < d_K){
@@ -234,6 +265,7 @@ __global__ void max_step(double* d_auxCentroids, int* d_pointsPerClass, double* 
         }
     }
 }
+
 int main(int argc, char* argv[])
 {
 
@@ -275,50 +307,123 @@ int main(int argc, char* argv[])
 		exit(error);
 	}
 	
-	double *data = (double*)calloc(lines*samples, sizeof(double));
-if (data == NULL)
-{
-	fprintf(stderr,"Memory allocation error.\n");
-	exit(-4);
-}
-error = readInput2(argv[1], data);  // Assumendo che readInput2 sia modificata per leggere double
-if(error != 0)
-{
-	showFileError(error, argv[1]);
-	exit(error);
-}
+	float *data = (float*)calloc(lines*samples,sizeof(float));
+	if (data == NULL)
+	{
+		fprintf(stderr,"Memory allocation error.\n");
+		exit(-4);
+	}
+	error = readInput2(argv[1], data);
+	if(error != 0)
+	{
+		showFileError(error,argv[1]);
+		exit(error);
+	}
 
-double maxThreshold = atof(argv[5]);
+	// Parameters
+	int K=atoi(argv[2]); 
+	int maxIterations=atoi(argv[3]);
+	int minChanges= (int)(lines*atof(argv[4])/100.0);
+	float maxThreshold=atof(argv[5]);
 
-double *centroids = (double*)calloc(K*samples, sizeof(double));
-double *auxCentroids = (double*)malloc(K*samples * sizeof(double));
-double *distCentroids = (double*)malloc(K * sizeof(double));
+	int *centroidPos = (int*)calloc(K,sizeof(int));
+	float *centroids = (float*)calloc(K*samples,sizeof(float));
+	int *classMap = (int*)calloc(lines,sizeof(int));
 
-if (centroidPos == NULL || centroids == NULL || classMap == NULL)
-{
-	fprintf(stderr,"Memory allocation error.\n");
-	exit(-4);
-}
+    if (centroidPos == NULL || centroids == NULL || classMap == NULL)
+	{
+		fprintf(stderr,"Memory allocation error.\n");
+		exit(-4);
+	}
 
-// CUDA - dichiarazione delle variabili su device
-double *d_data;
-double *d_centroids;
-double *d_auxCentroids;
-double *d_distCentroids;
+	// Initial centrodis
+	srand(0);
+	int i;
+	for(i=0; i<K; i++) 
+		centroidPos[i]=rand()%lines;
+	
+	// Loading the array of initial centroids with the data from the array data
+	// The centroids are points stored in the data array.
+	initCentroids(data, centroids, centroidPos, samples, K);
 
-// Allocazione memoria su device
-CHECK_CUDA_CALL(cudaMalloc(&d_data, lines*samples*sizeof(double)));
-CHECK_CUDA_CALL(cudaMalloc(&d_centroids, K*samples*sizeof(double)));
-CHECK_CUDA_CALL(cudaMalloc(&d_auxCentroids, K*samples*sizeof(double)));
-CHECK_CUDA_CALL(cudaMalloc(&d_distCentroids, K*sizeof(double)));
 
-// Copia dei dati iniziali
-CHECK_CUDA_CALL(cudaMemcpy(d_data, data, lines*samples*sizeof(double), cudaMemcpyHostToDevice));
-CHECK_CUDA_CALL(cudaMemcpy(d_classMap, classMap, lines*sizeof(int), cudaMemcpyHostToDevice));
-CHECK_CUDA_CALL(cudaMemcpy(d_centroids, centroids, K*samples*sizeof(double), cudaMemcpyHostToDevice));
-CHECK_CUDA_CALL(cudaMemcpy(d_pointsPerClass, pointsPerClass, K*sizeof(int), cudaMemcpyHostToDevice));
-CHECK_CUDA_CALL(cudaMemcpy(d_auxCentroids, auxCentroids, K*samples*sizeof(double), cudaMemcpyHostToDevice));
-CHECK_CUDA_CALL(cudaMemcpy(d_distCentroids, distCentroids, K*sizeof(double), cudaMemcpyHostToDevice));
+	printf("\n\tData file: %s \n\tPoints: %d\n\tDimensions: %d\n", argv[1], lines, samples);
+	printf("\tNumber of clusters: %d\n", K);
+	printf("\tMaximum number of iterations: %d\n", maxIterations);
+	printf("\tMinimum number of changes: %d [%g%% of %d points]\n", minChanges, atof(argv[4]), lines);
+	printf("\tMaximum centroid precision: %f\n", maxThreshold);
+	
+	//END CLOCK*****************************************
+	end = omp_get_wtime();
+	printf("\nMemory allocation: %f seconds\n", end - start);
+	fflush(stdout);
+
+	CHECK_CUDA_CALL( cudaSetDevice(0) );
+	CHECK_CUDA_CALL( cudaDeviceSynchronize() );
+	//**************************************************
+	//START CLOCK***************************************
+	start = omp_get_wtime();
+	//**************************************************
+	char *outputMsg = (char *)calloc(10000,sizeof(char));
+	char line[100];
+
+	int j;
+	int vclass;
+	float dist, minDist;
+	int it=0;
+	int changes = 0;
+	float maxDist;
+
+	//pointPerClass: number of points classified in each class
+	//auxCentroids: mean of the points in each class
+	int *pointsPerClass = (int *)malloc(K*sizeof(int));
+	float *auxCentroids = (float*)malloc(K*samples*sizeof(float));
+	float *distCentroids = (float*)malloc(K*sizeof(float)); 
+	if (pointsPerClass == NULL || auxCentroids == NULL || distCentroids == NULL)
+	{
+		fprintf(stderr,"Memory allocation error.\n");
+		exit(-4);
+	}
+
+/*
+ *
+ * START HERE: DO NOT CHANGE THE CODE ABOVE THIS POINT
+ *
+ */
+
+    // Copy costant on device
+    CHECK_CUDA_CALL( cudaMemcpyToSymbol(d_samples, &samples, sizeof(int)) );
+    CHECK_CUDA_CALL( cudaMemcpyToSymbol(d_K, &K, sizeof(int)) );
+    CHECK_CUDA_CALL( cudaMemcpyToSymbol(d_lines, &lines, sizeof(int)) );
+
+    // Creation of the variables on the device
+    float *d_data;
+    int *d_classMap;
+    float *d_centroids;
+    int *d_pointsPerClass;
+    float *d_auxCentroids;
+    float *d_maxDist;
+    int *d_changes;
+    float* d_distCentroids;
+
+    // Memory allocation on the device
+    CHECK_CUDA_CALL( cudaMalloc(&d_data, lines*samples*sizeof(float)) );
+    CHECK_CUDA_CALL( cudaMalloc(&d_classMap, lines*sizeof(int)) );
+    CHECK_CUDA_CALL( cudaMalloc(&d_centroids, K*samples*sizeof(float)) );
+    CHECK_CUDA_CALL( cudaMalloc(&d_pointsPerClass, K*sizeof(int)) );
+    CHECK_CUDA_CALL( cudaMalloc(&d_auxCentroids, K*samples*sizeof(float)) );
+    CHECK_CUDA_CALL( cudaMalloc(&d_maxDist, sizeof(float)) );
+    CHECK_CUDA_CALL( cudaMalloc(&d_changes, sizeof(int)) );
+    CHECK_CUDA_CALL( cudaMalloc(&d_distCentroids, K*sizeof(float)) );
+
+    // Copy data to the device
+    CHECK_CUDA_CALL( cudaMemcpy(d_data, data, lines*samples*sizeof(float), cudaMemcpyHostToDevice) );
+    CHECK_CUDA_CALL( cudaMemcpy(d_classMap, classMap, lines*sizeof(int), cudaMemcpyHostToDevice) );
+    CHECK_CUDA_CALL( cudaMemcpy(d_centroids, centroids, K*samples*sizeof(float), cudaMemcpyHostToDevice) );
+    CHECK_CUDA_CALL( cudaMemcpy(d_pointsPerClass, pointsPerClass, K*sizeof(int), cudaMemcpyHostToDevice) );
+    CHECK_CUDA_CALL( cudaMemcpy(d_auxCentroids, auxCentroids, K*samples*sizeof(float), cudaMemcpyHostToDevice) );
+    CHECK_CUDA_CALL( cudaMemcpy(d_distCentroids, distCentroids, K*sizeof(float), cudaMemcpyHostToDevice) );
+
     // Set of the grid and block dimensions
     dim3 blockSize(1024);
 	  dim3 numBlocks(ceil(static_cast<float>(lines) / blockSize.x));
@@ -330,9 +435,9 @@ CHECK_CUDA_CALL(cudaMemcpy(d_distCentroids, distCentroids, K*sizeof(double), cud
 		//1. Calculate the distance from each point to the centroid
 		//Assign each point to the nearest centroid.
     CHECK_CUDA_CALL( cudaMemset(d_changes, 0, sizeof(int)) );
-    CHECK_CUDA_CALL( cudaMemset(d_maxDist, DBL_MIN, sizeof(double)) );
+    CHECK_CUDA_CALL( cudaMemset(d_maxDist, FLT_MIN, sizeof(float)) );
 		CHECK_CUDA_CALL( cudaMemset(d_pointsPerClass, 0, K*sizeof(int)) );
-    CHECK_CUDA_CALL( cudaMemset(d_auxCentroids, 0, K*samples*sizeof(double)) );
+    CHECK_CUDA_CALL( cudaMemset(d_auxCentroids, 0, K*samples*sizeof(float)) );
 
 		// Syncronize the device
 		CHECK_CUDA_CALL( cudaDeviceSynchronize() );
@@ -350,8 +455,8 @@ CHECK_CUDA_CALL(cudaMemcpy(d_distCentroids, distCentroids, K*sizeof(double), cud
     CHECK_CUDA_CALL( cudaDeviceSynchronize() );
 
     CHECK_CUDA_CALL( cudaMemcpy(&changes, d_changes, sizeof(int), cudaMemcpyDeviceToHost) )
-    CHECK_CUDA_CALL( cudaMemcpy(&maxDist, d_maxDist, sizeof(double), cudaMemcpyDeviceToHost) )
-    CHECK_CUDA_CALL( cudaMemcpy(d_centroids, d_auxCentroids, K*samples*sizeof(double), cudaMemcpyHostToDevice) );
+    CHECK_CUDA_CALL( cudaMemcpy(&maxDist, d_maxDist, sizeof(float), cudaMemcpyDeviceToHost) )
+    CHECK_CUDA_CALL( cudaMemcpy(d_centroids, d_auxCentroids, K*samples*sizeof(float), cudaMemcpyHostToDevice) );
 		
 		sprintf(line,"\n[%d] Cluster changes: %d\tMax. centroid distance: %f", it, changes, maxDist);
 		outputMsg = strcat(outputMsg,line);
