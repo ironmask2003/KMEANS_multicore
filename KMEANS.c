@@ -398,7 +398,8 @@ int main(int argc, char* argv[])
 	//END CLOCK*****************************************
 	end = clock();
 	printf("\nComputation: %f seconds", (double)(end - start) / CLOCKS_PER_SEC);
-	fflush(stdout);
+	writeCompTimeToFile(argv[7], end - start);
+  fflush(stdout);
 	//**************************************************
 	//START CLOCK***************************************
 	start = clock();

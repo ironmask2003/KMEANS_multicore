@@ -266,6 +266,14 @@ __global__ void max_step(float* d_auxCentroids, int* d_pointsPerClass, float* d_
     }
 }
 
+// Funzione che scrive su un file il un valore preso in input
+void writeCompTimeToFile(char *filename, float value) {
+  FILE *fp;
+  fp = fopen(filename, "w");
+  fprintf(fp, "%f", value);
+  fclose(fp);
+}
+
 int main(int argc, char* argv[])
 {
 
@@ -287,11 +295,12 @@ int main(int argc, char* argv[])
 	*          and the next, the maximum distance between centroids is less than this precision, the
 	*          algorithm stops.
 	* argv[6]: Output file. Class assigned to each point of the input file.
+  * argv[7]: File where save the computation time
 	* */
 	if(argc !=  7)
 	{
 		fprintf(stderr,"EXECUTION ERROR K-MEANS: Parameters are not correct.\n");
-		fprintf(stderr,"./KMEANS [Input Filename] [Number of clusters] [Number of iterations] [Number of changes] [Threshold] [Output data file]\n");
+		fprintf(stderr,"./KMEANS [Input Filename] [Number of clusters] [Number of iterations] [Number of changes] [Threshold] [Output data file] [Computation time file] \n");
 		fflush(stderr);
 		exit(-1);
 	}
@@ -473,7 +482,8 @@ int main(int argc, char* argv[])
 	//END CLOCK*****************************************
 	end = omp_get_wtime();
 	printf("\nComputation: %f seconds", end - start);
-	fflush(stdout);
+	writeCompTimeToFile(argv[7], end - start);
+  fflush(stdout);
 	//**************************************************
 	//START CLOCK***************************************
 	start = omp_get_wtime();
