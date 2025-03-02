@@ -190,7 +190,7 @@ __device__ double d_euclideanDistance(double *point, double *center, int samples
 	double dist=0.0;
 	for(int i=0; i<samples; i++) 
 	{
-		dist = fmaf((point[i]-center[i]), (point[i]-center[i]), dist);
+		dist += (point[i]-center[i]) * (point[i]-center[i]);
 	}
   sqrt(dist);
   return(dist);
