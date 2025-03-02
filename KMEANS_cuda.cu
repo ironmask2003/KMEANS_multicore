@@ -324,7 +324,7 @@ int main(int argc, char* argv[])
 	int K=atoi(argv[2]); 
 	int maxIterations=atoi(argv[3]);
 	int minChanges= (int)(lines*atof(argv[4])/100.0);
-	float maxThreshold=atof(argv[5]);
+	double maxThreshold=atof(argv[5]);
 
 	int *centroidPos = (int*)calloc(K,sizeof(int));
 	double *centroids = (double*)calloc(K*samples,sizeof(double));
@@ -426,8 +426,8 @@ int main(int argc, char* argv[])
 
     // Set of the grid and block dimensions
     dim3 blockSize(1024);
-	  dim3 numBlocks(ceil(static_cast<float>(lines) / blockSize.x));
-    dim3 numBlocks2(ceil(static_cast<float>(K) / blockSize.x));
+	  dim3 numBlocks(ceil(static_cast<double>(lines) / blockSize.x));
+    dim3 numBlocks2(ceil(static_cast<double>(K) / blockSize.x));
 
 	do{
 		it++;
