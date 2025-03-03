@@ -379,39 +379,39 @@ int main(int argc, char* argv[])
   // CUDA memory allocation 
   
   // Copy costant on device
-  CHECK_CUDA_CALL( cudaMemcpyToSymbol(d_samples, &samples, sizeof(int)) );
-  CHECK_CUDA_CALL( cudaMemcpyToSymbol(d_K, &K, sizeof(int)) );
-  CHECK_CUDA_CALL( cudaMemcpyToSymbol(d_lines, &lines, sizeof(int)) );
+    CHECK_CUDA_CALL( cudaMemcpyToSymbol(d_samples, &samples, sizeof(int)) );
+    CHECK_CUDA_CALL( cudaMemcpyToSymbol(d_K, &K, sizeof(int)) );
+    CHECK_CUDA_CALL( cudaMemcpyToSymbol(d_lines, &lines, sizeof(int)) );
 
   // Creation of the variables on the device
   float *d_data, *d_centroids, *d_maxDist, *d_distCentroids, *d_auxCentroids;
   int *d_classMap, *d_pointsPerClass, *d_changes;
 
   // Memory allocation on the device
-  CHECK_CUDA_CALL( cudaMalloc(&d_data, lines*samples*sizeof(float)) );
-  CHECK_CUDA_CALL( cudaMalloc(&d_classMap, lines*sizeof(int)) );
-  CHECK_CUDA_CALL( cudaMalloc(&d_centroids, K*samples*sizeof(float)) );
-  CHECK_CUDA_CALL( cudaMalloc(&d_pointsPerClass, K*sizeof(int)) );
-  CHECK_CUDA_CALL( cudaMalloc(&d_auxCentroids, K*samples*sizeof(float)) );
-  CHECK_CUDA_CALL( cudaMalloc(&d_maxDist, sizeof(float)) );
-  CHECK_CUDA_CALL( cudaMalloc(&d_changes, sizeof(int)) );
-  CHECK_CUDA_CALL( cudaMalloc(&d_distCentroids, K*sizeof(float)) );
+    CHECK_CUDA_CALL( cudaMalloc(&d_data, lines*samples*sizeof(float)) );
+    CHECK_CUDA_CALL( cudaMalloc(&d_classMap, lines*sizeof(int)) );
+    CHECK_CUDA_CALL( cudaMalloc(&d_centroids, K*samples*sizeof(float)) );
+    CHECK_CUDA_CALL( cudaMalloc(&d_pointsPerClass, K*sizeof(int)) );
+    CHECK_CUDA_CALL( cudaMalloc(&d_auxCentroids, K*samples*sizeof(float)) );
+    CHECK_CUDA_CALL( cudaMalloc(&d_maxDist, sizeof(float)) );
+    CHECK_CUDA_CALL( cudaMalloc(&d_changes, sizeof(int)) );
+    CHECK_CUDA_CALL( cudaMalloc(&d_distCentroids, K*sizeof(float)) );
 
   // Copy data to the device
-  CHECK_CUDA_CALL( cudaMemcpy(d_data, data, lines*samples*sizeof(float), cudaMemcpyHostToDevice) );
-  CHECK_CUDA_CALL( cudaMemcpy(d_classMap, classMap, lines*sizeof(int), cudaMemcpyHostToDevice) );
-  CHECK_CUDA_CALL( cudaMemcpy(d_centroids, centroids, K*samples*sizeof(float), cudaMemcpyHostToDevice) );
-  CHECK_CUDA_CALL( cudaMemcpy(d_pointsPerClass, pointsPerClass, K*sizeof(int), cudaMemcpyHostToDevice) );
-  CHECK_CUDA_CALL( cudaMemcpy(d_auxCentroids, auxCentroids, K*samples*sizeof(float), cudaMemcpyHostToDevice) );
-  CHECK_CUDA_CALL( cudaMemcpy(d_distCentroids, distCentroids, K*sizeof(float), cudaMemcpyHostToDevice) );
+    CHECK_CUDA_CALL( cudaMemcpy(d_data, data, lines*samples*sizeof(float), cudaMemcpyHostToDevice) );
+    CHECK_CUDA_CALL( cudaMemcpy(d_classMap, classMap, lines*sizeof(int), cudaMemcpyHostToDevice) );
+    CHECK_CUDA_CALL( cudaMemcpy(d_centroids, centroids, K*samples*sizeof(float), cudaMemcpyHostToDevice) );
+    CHECK_CUDA_CALL( cudaMemcpy(d_pointsPerClass, pointsPerClass, K*sizeof(int), cudaMemcpyHostToDevice) );
+    CHECK_CUDA_CALL( cudaMemcpy(d_auxCentroids, auxCentroids, K*samples*sizeof(float), cudaMemcpyHostToDevice) );
+    CHECK_CUDA_CALL( cudaMemcpy(d_distCentroids, distCentroids, K*sizeof(float), cudaMemcpyHostToDevice) );
 	
 	//END CLOCK*****************************************
 	end = omp_get_wtime();
 	printf("\nMemory allocation: %f seconds\n", end - start);
 	fflush(stdout);
 
-	CHECK_CUDA_CALL( cudaSetDevice(0) );
-	CHECK_CUDA_CALL( cudaDeviceSynchronize() );
+    CHECK_CUDA_CALL( cudaSetDevice(0) );
+    CHECK_CUDA_CALL( cudaDeviceSynchronize() );
 	//**************************************************
 	//START CLOCK***************************************
 	start = omp_get_wtime();
@@ -419,9 +419,6 @@ int main(int argc, char* argv[])
 	char *outputMsg = (char *)calloc(10000,sizeof(char));
 	char line[100];
 
-	int j;
-	int vclass;
-	float dist, minDist;
 	int it=0;
 	int changes = 0;
 	float maxDist;
@@ -432,32 +429,32 @@ int main(int argc, char* argv[])
  *
  */
 
-    // Set of the grid and block dimensions
-    dim3 blockSize(1024);
-	  dim3 numBlocks(ceil(static_cast<double>(lines) / blockSize.x));
-    dim3 numBlocks2(ceil(static_cast<double>(K) / blockSize.x));
+  // Set of the grid and block dimensions
+  dim3 blockSize(1024);
+  dim3 numBlocks(ceil(static_cast<double>(lines) / blockSize.x));
+  dim3 numBlocks2(ceil(static_cast<double>(K) / blockSize.x));
 
 	do{
 		it++;
 	
-		//1. Calculate the distance from each point to the centroid
-		//Assign each point to the nearest centroid.
-    CHECK_CUDA_CALL( cudaMemset(d_changes, 0, sizeof(int)) );
-    CHECK_CUDA_CALL( cudaMemset(d_maxDist, FLT_MIN, sizeof(float)) );
-		CHECK_CUDA_CALL( cudaMemset(d_pointsPerClass, 0, K*sizeof(int)) );
-    CHECK_CUDA_CALL( cudaMemset(d_auxCentroids, 0, K*samples*sizeof(float)) );
+      //1. Calculate the distance from each point to the centroid
+      //Assign each point to the nearest centroid.
+      CHECK_CUDA_CALL( cudaMemset(d_changes, 0, sizeof(int)) );
+      CHECK_CUDA_CALL( cudaMemset(d_maxDist, FLT_MIN, sizeof(float)) );
+      CHECK_CUDA_CALL( cudaMemset(d_pointsPerClass, 0, K*sizeof(int)) );
+      CHECK_CUDA_CALL( cudaMemset(d_auxCentroids, 0, K*samples*sizeof(float)) );
 
-		// Syncronize the device
-		CHECK_CUDA_CALL( cudaDeviceSynchronize() );
+      // Syncronize the device
+      CHECK_CUDA_CALL( cudaDeviceSynchronize() );
 
-        assign_centroids<<<numBlocks, blockSize>>>(d_data, d_centroids, d_classMap, d_changes, d_pointsPerClass, d_auxCentroids);
-        CHECK_CUDA_LAST();
+      assign_centroids<<<numBlocks, blockSize>>>(d_data, d_centroids, d_classMap, d_changes, d_pointsPerClass, d_auxCentroids);
+      CHECK_CUDA_LAST();
 
-        // Syncronize the device
-        CHECK_CUDA_CALL( cudaDeviceSynchronize() );
+      // Syncronize the device
+      CHECK_CUDA_CALL( cudaDeviceSynchronize() );
 
-		    max_step<<<numBlocks2, blockSize>>>(d_auxCentroids, d_pointsPerClass, d_centroids, d_maxDist, d_distCentroids);
-        CHECK_CUDA_LAST();
+      max_step<<<numBlocks2, blockSize>>>(d_auxCentroids, d_pointsPerClass, d_centroids, d_maxDist, d_distCentroids);
+      CHECK_CUDA_LAST();
     
     // Syncronize the device
     CHECK_CUDA_CALL( cudaDeviceSynchronize() );
