@@ -251,6 +251,7 @@ __global__ void assign_centroids(float* d_data, float* d_centroids, int* d_class
     }
 }
 
+// Kernel per il calcolo della distanza massima tra i centroidi
 __global__ void max_step(float* d_auxCentroids, int* d_pointsPerClass, float* d_centroids, float* d_maxDist, float* d_distCentroids){
 	  int id = (blockIdx.x * blockDim.x) + threadIdx.x;
 
@@ -361,6 +362,36 @@ int main(int argc, char* argv[])
 	printf("\tMaximum number of iterations: %d\n", maxIterations);
 	printf("\tMinimum number of changes: %d [%g%% of %d points]\n", minChanges, atof(argv[4]), lines);
 	printf("\tMaximum centroid precision: %f\n", maxThreshold);
+
+
+  // CUDA memory allocation 
+  
+  // Copy costant on device
+  CHECK_CUDA_CALL( cudaMemcpyToSymbol(d_samples, &samples, sizeof(int)) );
+  CHECK_CUDA_CALL( cudaMemcpyToSymbol(d_K, &K, sizeof(int)) );
+  CHECK_CUDA_CALL( cudaMemcpyToSymbol(d_lines, &lines, sizeof(int)) );
+
+  // Creation of the variables on the device
+  float *d_data, *d_centroids, *d_maxDist, *d_distCentroids, *d_auxCentroids;
+  int *d_classMap, *d_pointsPerClass, *d_changes;
+
+  // Memory allocation on the device
+  CHECK_CUDA_CALL( cudaMalloc(&d_data, lines*samples*sizeof(float)) );
+  CHECK_CUDA_CALL( cudaMalloc(&d_classMap, lines*sizeof(int)) );
+  CHECK_CUDA_CALL( cudaMalloc(&d_centroids, K*samples*sizeof(float)) );
+  CHECK_CUDA_CALL( cudaMalloc(&d_pointsPerClass, K*sizeof(int)) );
+  CHECK_CUDA_CALL( cudaMalloc(&d_auxCentroids, K*samples*sizeof(float)) );
+  CHECK_CUDA_CALL( cudaMalloc(&d_maxDist, sizeof(float)) );
+  CHECK_CUDA_CALL( cudaMalloc(&d_changes, sizeof(int)) );
+  CHECK_CUDA_CALL( cudaMalloc(&d_distCentroids, K*sizeof(float)) );
+
+  // Copy data to the device
+  CHECK_CUDA_CALL( cudaMemcpy(d_data, data, lines*samples*sizeof(float), cudaMemcpyHostToDevice) );
+  CHECK_CUDA_CALL( cudaMemcpy(d_classMap, classMap, lines*sizeof(int), cudaMemcpyHostToDevice) );
+  CHECK_CUDA_CALL( cudaMemcpy(d_centroids, centroids, K*samples*sizeof(float), cudaMemcpyHostToDevice) );
+  CHECK_CUDA_CALL( cudaMemcpy(d_pointsPerClass, pointsPerClass, K*sizeof(int), cudaMemcpyHostToDevice) );
+  CHECK_CUDA_CALL( cudaMemcpy(d_auxCentroids, auxCentroids, K*samples*sizeof(float), cudaMemcpyHostToDevice) );
+  CHECK_CUDA_CALL( cudaMemcpy(d_distCentroids, distCentroids, K*sizeof(float), cudaMemcpyHostToDevice) );
 	
 	//END CLOCK*****************************************
 	end = omp_get_wtime();
@@ -399,33 +430,6 @@ int main(int argc, char* argv[])
  * START HERE: DO NOT CHANGE THE CODE ABOVE THIS POINT
  *
  */
-
-    // Copy costant on device
-    CHECK_CUDA_CALL( cudaMemcpyToSymbol(d_samples, &samples, sizeof(int)) );
-    CHECK_CUDA_CALL( cudaMemcpyToSymbol(d_K, &K, sizeof(int)) );
-    CHECK_CUDA_CALL( cudaMemcpyToSymbol(d_lines, &lines, sizeof(int)) );
-
-    // Creation of the variables on the device
-    float *d_data, *d_centroids, *d_maxDist, *d_distCentroids, *d_auxCentroids;
-    int *d_classMap, *d_pointsPerClass, *d_changes;
-
-    // Memory allocation on the device
-    CHECK_CUDA_CALL( cudaMalloc(&d_data, lines*samples*sizeof(float)) );
-    CHECK_CUDA_CALL( cudaMalloc(&d_classMap, lines*sizeof(int)) );
-    CHECK_CUDA_CALL( cudaMalloc(&d_centroids, K*samples*sizeof(float)) );
-    CHECK_CUDA_CALL( cudaMalloc(&d_pointsPerClass, K*sizeof(int)) );
-    CHECK_CUDA_CALL( cudaMalloc(&d_auxCentroids, K*samples*sizeof(float)) );
-    CHECK_CUDA_CALL( cudaMalloc(&d_maxDist, sizeof(float)) );
-    CHECK_CUDA_CALL( cudaMalloc(&d_changes, sizeof(int)) );
-    CHECK_CUDA_CALL( cudaMalloc(&d_distCentroids, K*sizeof(float)) );
-
-    // Copy data to the device
-    CHECK_CUDA_CALL( cudaMemcpy(d_data, data, lines*samples*sizeof(float), cudaMemcpyHostToDevice) );
-    CHECK_CUDA_CALL( cudaMemcpy(d_classMap, classMap, lines*sizeof(int), cudaMemcpyHostToDevice) );
-    CHECK_CUDA_CALL( cudaMemcpy(d_centroids, centroids, K*samples*sizeof(float), cudaMemcpyHostToDevice) );
-    CHECK_CUDA_CALL( cudaMemcpy(d_pointsPerClass, pointsPerClass, K*sizeof(int), cudaMemcpyHostToDevice) );
-    CHECK_CUDA_CALL( cudaMemcpy(d_auxCentroids, auxCentroids, K*samples*sizeof(float), cudaMemcpyHostToDevice) );
-    CHECK_CUDA_CALL( cudaMemcpy(d_distCentroids, distCentroids, K*sizeof(float), cudaMemcpyHostToDevice) );
 
     // Set of the grid and block dimensions
     dim3 blockSize(1024);

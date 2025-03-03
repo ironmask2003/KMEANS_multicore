@@ -201,7 +201,13 @@ void zeroIntArray(int *array, int size)
 		array[i] = 0;	
 }
 
-
+// Funzione che scrive su un file il un valore preso in input
+void writeCompTimeToFile(char *filename, float value) {
+  FILE *fp;
+  fp = fopen(filename, "w");
+  fprintf(fp, "%f", value);
+  fclose(fp);
+}
 
 int main(int argc, char* argv[])
 {
@@ -398,7 +404,7 @@ int main(int argc, char* argv[])
 	//END CLOCK*****************************************
 	end = clock();
 	printf("\nComputation: %f seconds", (double)(end - start) / CLOCKS_PER_SEC);
-	writeCompTimeToFile(argv[7], end - start);
+	writeCompTimeToFile(argv[7], (double) (end - start) / CLOCKS_PER_SEC);
   fflush(stdout);
 	//**************************************************
 	//START CLOCK***************************************

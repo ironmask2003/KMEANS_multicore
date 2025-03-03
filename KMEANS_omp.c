@@ -172,7 +172,7 @@ float euclideanDistance(float *point, float *center, int samples)
 {
 	float dist=0.0;
 	float num1, num2;
-	for(int i=0; i<samples; i++) 
+  for(int i=0; i<samples; i++) 
 	{
 		num1 = point[i];
 		num2 = center[i];
@@ -341,8 +341,6 @@ int main(int argc, char* argv[])
  *
  */
 
-	// double temp;
-
 	do{
 		it++;
 		//1. Calculate the distance from each point to the centroid
@@ -351,7 +349,7 @@ int main(int argc, char* argv[])
 		zeroIntArray(pointsPerClass,K);
 		zeroFloatMatriz(auxCentroids,K,samples);
 
-		#pragma omp parallel for private(class, dist, j, minDist) shared(classMap) reduction(+:changes) reduction(+:auxCentroids[:K*samples], pointsPerClass[:K])
+		#pragma omp parallel for private(class, dist, j, minDist) reduction(+:changes, auxCentroids[:K*samples], pointsPerClass[:K])
 		for(i=0; i<lines; i++){
 			class=1;
 			minDist=FLT_MAX;
