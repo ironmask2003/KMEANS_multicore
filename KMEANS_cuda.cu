@@ -357,6 +357,18 @@ int main(int argc, char* argv[])
 	initCentroids(data, centroids, centroidPos, samples, K);
 
 
+  //pointPerClass: number of points classified in each class
+	//auxCentroids: mean of the points in each class
+	int *pointsPerClass = (int *)malloc(K*sizeof(int));
+	float *auxCentroids = (float*)malloc(K*samples*sizeof(float));
+	float *distCentroids = (float*)malloc(K*sizeof(float)); 
+	if (pointsPerClass == NULL || auxCentroids == NULL || distCentroids == NULL)
+	{
+		fprintf(stderr,"Memory allocation error.\n");
+		exit(-4);
+	}
+
+
 	printf("\n\tData file: %s \n\tPoints: %d\n\tDimensions: %d\n", argv[1], lines, samples);
 	printf("\tNumber of clusters: %d\n", K);
 	printf("\tMaximum number of iterations: %d\n", maxIterations);
@@ -413,17 +425,6 @@ int main(int argc, char* argv[])
 	int it=0;
 	int changes = 0;
 	float maxDist;
-
-	//pointPerClass: number of points classified in each class
-	//auxCentroids: mean of the points in each class
-	int *pointsPerClass = (int *)malloc(K*sizeof(int));
-	float *auxCentroids = (float*)malloc(K*samples*sizeof(float));
-	float *distCentroids = (float*)malloc(K*sizeof(float)); 
-	if (pointsPerClass == NULL || auxCentroids == NULL || distCentroids == NULL)
-	{
-		fprintf(stderr,"Memory allocation error.\n");
-		exit(-4);
-	}
 
 /*
  *
