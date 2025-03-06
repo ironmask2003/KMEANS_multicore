@@ -469,7 +469,7 @@ int main(int argc, char* argv[])
   // Copy d_classMap in classMap
     CHECK_CUDA_CALL( cudaMemcpy(classMap, d_classMap, lines*sizeof(int), cudaMemcpyDeviceToHost) );
 
-  pritnf("ciao\n");
+  printf("ciao\n");
 
 /*
  *
