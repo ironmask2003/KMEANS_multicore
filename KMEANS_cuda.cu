@@ -436,7 +436,11 @@ int main(int argc, char* argv[])
   dim3 numBlocks(ceil(static_cast<double>(lines) / blockSize.x));
   dim3 numBlocks2(ceil(static_cast<double>(K) / blockSize.x));
 
+  #pragma omp parallel
 	do {
+	
+	#pragma omp single
+	{
 		it++;
 
 		// Reset variables
@@ -444,6 +448,7 @@ int main(int argc, char* argv[])
 		CHECK_CUDA_CALL(cudaMemset(d_maxDist, FLT_MIN, sizeof(float)));
 		CHECK_CUDA_CALL(cudaMemset(d_pointsPerClass, 0, K * sizeof(int)));
 		CHECK_CUDA_CALL(cudaMemset(d_auxCentroids, 0, K * samples * sizeof(float)));
+	}
 
 		assign_centroids<<<numBlocks, blockSize>>>(d_data, d_centroids, d_classMap, d_changes, d_pointsPerClass, d_auxCentroids);
 		CHECK_CUDA_LAST();
@@ -460,7 +465,7 @@ int main(int argc, char* argv[])
 
 		sprintf(line, "\n[%d] Cluster changes: %d\tMax. centroid distance: %f", it, changes, maxDist);
 		outputMsg = strcat(outputMsg, line);
-
+	
 	} while ((changes > minChanges) && (it < maxIterations) && (maxDist > maxThreshold));
 
   // Copy d_classMap in classMap
