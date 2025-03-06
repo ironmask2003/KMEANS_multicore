@@ -468,8 +468,11 @@ int main(int argc, char* argv[])
 		// Synchronize the device
 		CHECK_CUDA_CALL(cudaDeviceSynchronize());
 
+	#pragma omp single
+	{
 		sprintf(line, "\n[%d] Cluster changes: %d\tMax. centroid distance: %f", it, changes, maxDist);
 		outputMsg = strcat(outputMsg, line);
+	}
 
 	} while ((changes > minChanges) && (it < maxIterations) && (maxDist > maxThreshold));
 
