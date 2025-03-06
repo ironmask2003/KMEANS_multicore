@@ -436,7 +436,7 @@ int main(int argc, char* argv[])
   dim3 numBlocks(ceil(static_cast<double>(lines) / blockSize.x));
   dim3 numBlocks2(ceil(static_cast<double>(K) / blockSize.x));
 
-  #pragma omp parallel shared(d_changes, d_maxDist, d_centroids) reduction(+:it)
+  #pragma omp parallel shared(d_changes, d_maxDist, d_centroids) reduction(+:it) schedule(guided)
 	do {
 		it++;
 	
