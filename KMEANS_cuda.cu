@@ -479,13 +479,11 @@ int main(int argc, char* argv[])
 
 	CHECK_CUDA_CALL( cudaDeviceSynchronize() );
 
-  printf("ciao\n");
-
-
 	//END CLOCK*****************************************
 	end = omp_get_wtime();
-  printf("ciao pre comp_time\n");
+  printf("\nCiao pre comp_time\n");
 	printf("\nComputation: %f seconds", end - start);
+  printf("ciao\n");
 	writeCompTimeToFile(argv[7], end - start);
   fflush(stdout);
 	//**************************************************
