@@ -219,19 +219,24 @@ void zeroIntArray(int *array, int size)
 		array[i] = 0;	
 }
 
-// Costanti
+// Costants used in the kernel
 __constant__ int d_samples;
 __constant__ int d_K;
 __constant__ int d_lines;
 
-// Kernel per il calcolo della distanza euclidea
+// Kernle used to assign to each point the nearest cluster
 __global__ void assign_centroids(float* d_data, float* d_centroids, int* d_classMap, int* d_changes, int* d_pointsPerClass, float* d_auxCentroids){
-	  int id = (blockIdx.x * blockDim.x) + threadIdx.x;
+	  
+    // Thread ID
+    int id = (blockIdx.x * blockDim.x) + threadIdx.x;
 
+    // Check if the thread is in the range of the data and assign the point to the nearest centroid
     if (id < d_lines) {
         int vclass = 1;
         float minDist = FLT_MAX;
         float dist = 0.0;
+
+        // Assign the point to the nearest cluster
         for (int j = 0; j < d_K; j++) {
             dist = d_euclideanDistance(&d_data[id*d_samples], &d_centroids[j*d_samples], d_samples);
             if (dist < minDist) {
@@ -239,11 +244,16 @@ __global__ void assign_centroids(float* d_data, float* d_centroids, int* d_class
                 vclass = j + 1;
             }
         }
+
+        // Check if the point changes its cluster and increment the number of changes
         if (d_classMap[id] != vclass) {
             atomicAdd(d_changes, 1);
         }
+
+        // Assign the point to the new cluster
         d_classMap[id] = vclass;
 
+        // Increment the number of points in the cluster and calculate the new centroid
         atomicAdd(&d_pointsPerClass[vclass-1], 1);
         for(int j=0; j<d_samples; j++){
             atomicAdd(&d_auxCentroids[(vclass-1)*d_samples+j], d_data[id*d_samples+j]);
@@ -251,15 +261,21 @@ __global__ void assign_centroids(float* d_data, float* d_centroids, int* d_class
     }
 }
 
-// Kernel per il calcolo della distanza massima tra i centroidi
+// Kernel functino used to calculate the maximum distance between the older centroids and the new ones
 __global__ void max_step(float* d_auxCentroids, int* d_pointsPerClass, float* d_centroids, float* d_maxDist, float* d_distCentroids){
-	  int id = (blockIdx.x * blockDim.x) + threadIdx.x;
+	  
+    // ID of the thread
+    int id = (blockIdx.x * blockDim.x) + threadIdx.x;
 
+    // Check if the thread is in the range data and calculate the maxDist bewteen the older centroids with the new one
     if (id < d_K){
+
+        // For each data in the cluster calculate the new centroid
         for(int j=0; j<d_samples; j++){
             d_auxCentroids[id*d_samples+j] /= d_pointsPerClass[id];
         }
 
+        // Calculate the distance between the older centroid and the new one
         d_distCentroids[id]=d_euclideanDistance(&d_centroids[id*d_samples], &d_auxCentroids[id*d_samples], d_samples);
         if(d_distCentroids[id]>*d_maxDist){
             *d_maxDist = d_distCentroids[id];
@@ -383,7 +399,7 @@ int main(int argc, char* argv[])
     CHECK_CUDA_CALL( cudaMemcpyToSymbol(d_K, &K, sizeof(int)) );
     CHECK_CUDA_CALL( cudaMemcpyToSymbol(d_lines, &lines, sizeof(int)) );
 
-  // Creation of the variables on the device
+  // Creation of the variables used on the device
   float *d_data, *d_centroids, *d_maxDist, *d_distCentroids, *d_auxCentroids;
   int *d_classMap, *d_pointsPerClass, *d_changes;
 
@@ -437,28 +453,36 @@ int main(int argc, char* argv[])
   dim3 numBlocks2(ceil(static_cast<double>(K) / blockSize.x));
 
 	do {
+
+    // Increment the iteration counter
 		it++;
 
-		// Reset variables
-		CHECK_CUDA_CALL(cudaMemset(d_changes, 0, sizeof(int)));
-		CHECK_CUDA_CALL(cudaMemset(d_maxDist, FLT_MIN, sizeof(float)));
-		CHECK_CUDA_CALL(cudaMemset(d_pointsPerClass, 0, K * sizeof(int)));
-		CHECK_CUDA_CALL(cudaMemset(d_auxCentroids, 0, K * samples * sizeof(float)));
-		// Synchronize the device
-		CHECK_CUDA_CALL(cudaDeviceSynchronize());
-
-		assign_centroids<<<numBlocks, blockSize>>>(d_data, d_centroids, d_classMap, d_changes, d_pointsPerClass, d_auxCentroids);
-		CHECK_CUDA_LAST();
-
-		max_step<<<numBlocks2, blockSize>>>(d_auxCentroids, d_pointsPerClass, d_centroids, d_maxDist, d_distCentroids);
-		CHECK_CUDA_LAST();
+    // Reset of the variables to store the number of changes, the maximum distance between centroids and the number of points per cluster
+      CHECK_CUDA_CALL(cudaMemset(d_changes, 0, sizeof(int)));
+      CHECK_CUDA_CALL(cudaMemset(d_maxDist, FLT_MIN, sizeof(float)));
+      CHECK_CUDA_CALL(cudaMemset(d_pointsPerClass, 0, K * sizeof(int)));
+      CHECK_CUDA_CALL(cudaMemset(d_auxCentroids, 0, K * samples * sizeof(float)));
 
 		// Synchronize the device
-		CHECK_CUDA_CALL(cudaDeviceSynchronize());
+      CHECK_CUDA_CALL(cudaDeviceSynchronize());
 
-		CHECK_CUDA_CALL(cudaMemcpy(&changes, d_changes, sizeof(int), cudaMemcpyDeviceToHost));
-		CHECK_CUDA_CALL(cudaMemcpy(&maxDist, d_maxDist, sizeof(float), cudaMemcpyDeviceToHost));
-		CHECK_CUDA_CALL(cudaMemcpy(d_centroids, d_auxCentroids, K * samples * sizeof(float), cudaMemcpyHostToDevice));
+    // First kernel used to assign to each point the nearest centroid
+      assign_centroids<<<numBlocks, blockSize>>>(d_data, d_centroids, d_classMap, d_changes, d_pointsPerClass, d_auxCentroids);
+      CHECK_CUDA_LAST();
+
+    // Second kernel used to calculate the maximum distance between the older centroids and the new ones
+      max_step<<<numBlocks2, blockSize>>>(d_auxCentroids, d_pointsPerClass, d_centroids, d_maxDist, d_distCentroids);
+      CHECK_CUDA_LAST();
+
+		// Synchronize the device
+      CHECK_CUDA_CALL(cudaDeviceSynchronize());
+
+    // Copy the number of changes and the maximum distance between the older centroids and the new ones in the local variables
+      CHECK_CUDA_CALL(cudaMemcpy(&changes, d_changes, sizeof(int), cudaMemcpyDeviceToHost));
+      CHECK_CUDA_CALL(cudaMemcpy(&maxDist, d_maxDist, sizeof(float), cudaMemcpyDeviceToHost));
+
+    // Copy the new centroids in the centroids variable
+      CHECK_CUDA_CALL(cudaMemcpy(d_centroids, d_auxCentroids, K * samples * sizeof(float), cudaMemcpyHostToDevice));
 
 		sprintf(line, "\n[%d] Cluster changes: %d\tMax. centroid distance: %f", it, changes, maxDist);
 		outputMsg = strcat(outputMsg, line);
@@ -476,7 +500,7 @@ int main(int argc, char* argv[])
 	// Output and termination conditions
 	printf("%s",outputMsg);	
 
-	CHECK_CUDA_CALL( cudaDeviceSynchronize() );
+    CHECK_CUDA_CALL( cudaDeviceSynchronize() );
 
 	//END CLOCK*****************************************
 	end = omp_get_wtime();
