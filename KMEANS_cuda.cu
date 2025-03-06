@@ -436,13 +436,12 @@ int main(int argc, char* argv[])
   dim3 numBlocks(ceil(static_cast<double>(lines) / blockSize.x));
   dim3 numBlocks2(ceil(static_cast<double>(K) / blockSize.x));
 
-  #pragma omp parallel shared(changes, maxDist, outputMsg) private(d_changes, d_maxDist, d_pointsPerClass, d_auxCentroids) reduction(+:it)
+  #pragma omp parallel shared(changes, maxDist, outputMsg) reduction(+:it)
 	do {
+		it++;
 	
 	#pragma omp single
 	{
-		it++;
-
 		// Reset variables
 		CHECK_CUDA_CALL(cudaMemset(d_changes, 0, sizeof(int)));
 		CHECK_CUDA_CALL(cudaMemset(d_maxDist, FLT_MIN, sizeof(float)));
