@@ -203,7 +203,7 @@ void zeroIntArray(int *array, int size)
 		array[i] = 0;	
 }
 
-// Funzione che scrive su un file il un valore preso in input
+// Function used to write the computation time to a file
 void writeCompTimeToFile(char *filename, float value) {
   // Run a bash command
   char command[256];
@@ -344,96 +344,103 @@ int main(int argc, char* argv[])
  *
  */
 
+  // Number of processes
 	int size;
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
 
+  // Local variable used to count the number of changes of each process
 	int local_changes;
 
-	// Divisione delle linee tra i processi
+  // Number of lines assigned to each process
 	int local_lines = lines / size;
-	// Inizio e fine delle linee assegnate a ciascun processo
-	int start_line = rank * local_lines;
-	int end_line = (rank == size - 1) ? lines : start_line + local_lines;	// Se e' l'ultimo processo, assegna tutte le linee rimanenti
 
-	// Divisione dei cluster tra i processi
+  // Start and end of the lines assigned to each process
+	int start_line = rank * local_lines;
+	int end_line = (rank == size - 1) ? lines : start_line + local_lines;
+
+  // Number of clusters assigned to each process
 	int local_K = K / size;
-	// Inizio e fine dei cluster assegnati a ciascun processo
+
+  // Start and end of the clusters assigned to each process
 	int start_K = rank * local_K;
-	int end_K = (rank == size - 1) ? K : start_K + local_K; 	// Se e' l'ultimo processo, assegna tutti i cluster rimanenti
+	int end_K = (rank == size - 1) ? K : start_K + local_K;
 
 	do{
+
+    // Increment the iteration counter
 		it++;
-	
-		//1. Calculate the distance from each point to the centroid
-		//Assign each point to the nearest centroid.
+
+    // Variables to store the number of changes, the maximum distance between centroids and the number of points per cluster
+
 		changes = 0;
 		local_changes = 0;
 
-		// 2. Recalculates the centroids: calculates the mean within each cluster
 		zeroIntArray(pointsPerClass,K);
 		zeroFloatMatriz(auxCentroids,K,samples);
 
 		maxDist = FLT_MIN;
 		float local_maxDist = FLT_MIN;
 
+    // Assign each point to the nearest centroid and calculates the mean within each cluster
 		#pragma omp parallel for private(j,class,dist,minDist) reduction(+:local_changes) reduction(+:pointsPerClass[:K],auxCentroids[:K*samples])
-		for(i=start_line; i<end_line; i++)
-		{
+		for(i=start_line; i<end_line; i++) {
 			class=1;
 			minDist=FLT_MAX;
-			for(j=0; j<K; j++)
-			{
+
+      // Assign at each cluster the point that is closer to its centroid
+			for(j=0; j<K; j++) {
 				dist=euclideanDistance(&data[i*samples], &centroids[j*samples], samples);
 
-				if(dist < minDist)
-				{
+				if(dist < minDist) {
 					minDist=dist;
 					class=j+1;
 				}
 			}
+
+      // If the point changes its cluster, increment the local_changes counter
 			if(classMap[i]!=class)
-			{
 				local_changes++;
-			}
+
+      // Assign to point the cluster that is closer to it
 			classMap[i]=class;
 
+      // increment the pointsPerClass counter and calculate the mean of the points in each cluster
 			pointsPerClass[class-1] = pointsPerClass[class-1] +1;
-			for(j=0; j<samples; j++){
+			for(j=0; j<samples; j++)
 				auxCentroids[(class-1)*samples+j] += data[i*samples+j];
-			}
 		}
 
-		// Unisce i vari class map di tutti i processi e li manda a tutti i processi
+    // Gather of classMap
 		MPI_Allgather(MPI_IN_PLACE, local_lines, MPI_INT, classMap, local_lines, MPI_INT, MPI_COMM_WORLD);
 
-		// Somma dei local_changes di tutti i processi
+    // Sum local_changes of all processes
 		MPI_Allreduce(&local_changes, &changes, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
-		// Somma dei pointsPerClass di tutti i processi
+    // Sum all elements of pointsPerClass of all process
 		MPI_Allreduce(MPI_IN_PLACE, pointsPerClass, K, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
-		// Somma dei auxCentroids di tutti i processi
+    // Sum all alements of auxCentroids of all process
 		MPI_Allreduce(MPI_IN_PLACE, auxCentroids, K*samples, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
 
+    // Calculate the maximum distance between the centroids of each cluster
 		#pragma omp parallel for private(j) reduction(max:local_maxDist)
 		for(i=start_K; i<end_K; i++) 
 		{
-			for(j=0; j<samples; j++){
+			for(j=0; j<samples; j++)
 				auxCentroids[i*samples+j] /= pointsPerClass[i];
-			}
 
 			distCentroids[i] = euclideanDistance(&centroids[i * samples], &auxCentroids[i * samples], samples);
-			if (distCentroids[i] > local_maxDist) {
+			if (distCentroids[i] > local_maxDist)
 				local_maxDist = distCentroids[i];
-			}
 		}
 
-		// Gather di auxCentroids
+    // All gather of auxCentroids
 		MPI_Allgather(MPI_IN_PLACE, local_K * samples, MPI_FLOAT, auxCentroids, local_K * samples, MPI_FLOAT, MPI_COMM_WORLD);
 
-		// Trova il massimo tra i massimi locali
+    // Take the max from all local_maxDist of all process
 		MPI_Allreduce(&local_maxDist, &maxDist, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD);
 
+    // Copy auxCentroids to centroids
 		memcpy(centroids, auxCentroids, (K*samples*sizeof(float)));
 
 		if (rank == 0) {
