@@ -455,8 +455,6 @@ int main(int argc, char* argv[])
 		assign_centroids<<<numBlocks, blockSize>>>(d_data, d_centroids, d_classMap, d_changes, d_pointsPerClass, d_auxCentroids);
 		CHECK_CUDA_LAST();
 
-	#pragma omp barrier
-
 		max_step<<<numBlocks2, blockSize>>>(d_auxCentroids, d_pointsPerClass, d_centroids, d_maxDist, d_distCentroids);
 		CHECK_CUDA_LAST();
 
@@ -468,12 +466,7 @@ int main(int argc, char* argv[])
 		CHECK_CUDA_CALL(cudaMemcpy(&changes, d_changes, sizeof(int), cudaMemcpyDeviceToHost));
 		CHECK_CUDA_CALL(cudaMemcpy(&maxDist, d_maxDist, sizeof(float), cudaMemcpyDeviceToHost));
 		CHECK_CUDA_CALL(cudaMemcpy(d_centroids, d_auxCentroids, K * samples * sizeof(float), cudaMemcpyHostToDevice));
-	}
-		// Synchronize the device
-		CHECK_CUDA_CALL(cudaDeviceSynchronize());
-
-	#pragma omp single
-	{
+		
 		sprintf(line, "\n[%d] Cluster changes: %d\tMax. centroid distance: %f", it, changes, maxDist);
 		outputMsg = strcat(outputMsg, line);
 	}
