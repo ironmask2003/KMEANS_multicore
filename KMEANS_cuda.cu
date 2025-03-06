@@ -439,14 +439,14 @@ int main(int argc, char* argv[])
 	do{
 		it++;
 
-#pragma omp parallel private(d_changes, d_maxDist)
-{
     // Reset variables
       CHECK_CUDA_CALL( cudaMemset(d_changes, 0, sizeof(int)) );
       CHECK_CUDA_CALL( cudaMemset(d_maxDist, FLT_MIN, sizeof(float)) );
       CHECK_CUDA_CALL( cudaMemset(d_pointsPerClass, 0, K*sizeof(int)) );
       CHECK_CUDA_CALL( cudaMemset(d_auxCentroids, 0, K*samples*sizeof(float)) );
 
+#pragma omp parallel
+{
       assign_centroids<<<numBlocks, blockSize>>>(d_data, d_centroids, d_classMap, d_changes, d_pointsPerClass, d_auxCentroids);
       CHECK_CUDA_LAST();
 
