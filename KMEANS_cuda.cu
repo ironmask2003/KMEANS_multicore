@@ -449,6 +449,8 @@ int main(int argc, char* argv[])
 		CHECK_CUDA_CALL(cudaMemset(d_pointsPerClass, 0, K * sizeof(int)));
 		CHECK_CUDA_CALL(cudaMemset(d_auxCentroids, 0, K * samples * sizeof(float)));
 	}
+		// Synchronize the device
+		CHECK_CUDA_CALL(cudaDeviceSynchronize());
 
 		assign_centroids<<<numBlocks, blockSize>>>(d_data, d_centroids, d_classMap, d_changes, d_pointsPerClass, d_auxCentroids);
 		CHECK_CUDA_LAST();
