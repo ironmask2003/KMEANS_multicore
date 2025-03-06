@@ -367,7 +367,7 @@ int main(int argc, char* argv[])
 			}
 			classMap[i]=class;
 
-      pointsPerClass[class-1]++;
+      		pointsPerClass[class-1]++;
 			for(j=0; j<samples; j++){
 				auxCentroids[(class-1)*samples+j] += data[i*samples+j];
 			}

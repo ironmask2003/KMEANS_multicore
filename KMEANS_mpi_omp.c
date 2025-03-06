@@ -369,6 +369,7 @@ int main(int argc, char* argv[])
 
 		local_changes = 0;
 
+		#pragma omp parallel for private(j,class,dist,minDist) reduction(+:local_changes)
 		for(i=start_line; i<end_line; i++)
 		{
 			class=1;
@@ -426,6 +427,7 @@ int main(int argc, char* argv[])
 		
 		maxDist = FLT_MIN;
 		float local_maxDist = FLT_MIN;
+		#pragma omp parallel for reduction(max:local_maxDist)
 		for (i = start_K; i < end_K; i++) {
 			distCentroids[i] = euclideanDistance(&centroids[i * samples], &auxCentroids[i * samples], samples);
 			if (distCentroids[i] > local_maxDist) {
