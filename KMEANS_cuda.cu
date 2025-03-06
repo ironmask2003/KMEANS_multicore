@@ -445,14 +445,14 @@ int main(int argc, char* argv[])
       CHECK_CUDA_CALL( cudaMemset(d_pointsPerClass, 0, K*sizeof(int)) );
       CHECK_CUDA_CALL( cudaMemset(d_auxCentroids, 0, K*samples*sizeof(float)) );
 
-#pragma omp parallel
+#pragma omp parallel 
 {
       assign_centroids<<<numBlocks, blockSize>>>(d_data, d_centroids, d_classMap, d_changes, d_pointsPerClass, d_auxCentroids);
       CHECK_CUDA_LAST();
+}
 
       max_step<<<numBlocks2, blockSize>>>(d_auxCentroids, d_pointsPerClass, d_centroids, d_maxDist, d_distCentroids);
       CHECK_CUDA_LAST();
-}
 
       CHECK_CUDA_CALL( cudaMemcpy(&changes, d_changes, sizeof(int), cudaMemcpyDeviceToHost) )
       CHECK_CUDA_CALL( cudaMemcpy(&maxDist, d_maxDist, sizeof(float), cudaMemcpyDeviceToHost) )
