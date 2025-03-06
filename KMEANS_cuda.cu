@@ -439,7 +439,7 @@ int main(int argc, char* argv[])
 	do{
 		it++;
 
-#pragma omp parallel shared(d_changes, d_maxDist, d_pointsPerClass, d_auxCentroids, d_data, d_centroids, d_classMap, d_distCentroids) private(changes, maxDist)
+#pragma omp parallel shared(d_changes, d_maxDist, d_pointsPerClass, d_auxCentroids)
 {
 
     // Reset variables
