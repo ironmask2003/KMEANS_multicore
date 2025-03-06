@@ -439,7 +439,8 @@ int main(int argc, char* argv[])
 #pragma omp parallel
 	do{
 
-#pragma omp single {
+#pragma omp single 
+{
 		it++;
 
     // Reset variables
@@ -455,7 +456,8 @@ int main(int argc, char* argv[])
       max_step<<<numBlocks2, blockSize>>>(d_auxCentroids, d_pointsPerClass, d_centroids, d_maxDist, d_distCentroids);
       CHECK_CUDA_LAST();
       
-#pragma omp single {
+#pragma omp single 
+{
       CHECK_CUDA_CALL( cudaMemcpy(&changes, d_changes, sizeof(int), cudaMemcpyDeviceToHost) )
       CHECK_CUDA_CALL( cudaMemcpy(&maxDist, d_maxDist, sizeof(float), cudaMemcpyDeviceToHost) )
       CHECK_CUDA_CALL( cudaMemcpy(d_centroids, d_auxCentroids, K*samples*sizeof(float), cudaMemcpyHostToDevice) );
