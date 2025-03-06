@@ -436,18 +436,14 @@ int main(int argc, char* argv[])
   dim3 numBlocks(ceil(static_cast<double>(lines) / blockSize.x));
   dim3 numBlocks2(ceil(static_cast<double>(K) / blockSize.x));
 
-  #pragma omp parallel shared(d_changes, d_maxDist, d_centroids) reduction(+:it) schedule(guided)
 	do {
 		it++;
-	
-	#pragma omp single
-	{
+
 		// Reset variables
 		CHECK_CUDA_CALL(cudaMemset(d_changes, 0, sizeof(int)));
 		CHECK_CUDA_CALL(cudaMemset(d_maxDist, FLT_MIN, sizeof(float)));
 		CHECK_CUDA_CALL(cudaMemset(d_pointsPerClass, 0, K * sizeof(int)));
 		CHECK_CUDA_CALL(cudaMemset(d_auxCentroids, 0, K * samples * sizeof(float)));
-	}
 		// Synchronize the device
 		CHECK_CUDA_CALL(cudaDeviceSynchronize());
 
@@ -460,15 +456,12 @@ int main(int argc, char* argv[])
 		// Synchronize the device
 		CHECK_CUDA_CALL(cudaDeviceSynchronize());
 
-	#pragma omp single
-	{
 		CHECK_CUDA_CALL(cudaMemcpy(&changes, d_changes, sizeof(int), cudaMemcpyDeviceToHost));
 		CHECK_CUDA_CALL(cudaMemcpy(&maxDist, d_maxDist, sizeof(float), cudaMemcpyDeviceToHost));
 		CHECK_CUDA_CALL(cudaMemcpy(d_centroids, d_auxCentroids, K * samples * sizeof(float), cudaMemcpyHostToDevice));
 
 		sprintf(line, "\n[%d] Cluster changes: %d\tMax. centroid distance: %f", it, changes, maxDist);
 		outputMsg = strcat(outputMsg, line);
-	}
 
 	} while ((changes > minChanges) && (it < maxIterations) && (maxDist > maxThreshold));
 
