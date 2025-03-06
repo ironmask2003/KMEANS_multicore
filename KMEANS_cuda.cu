@@ -436,9 +436,11 @@ int main(int argc, char* argv[])
   dim3 numBlocks(ceil(static_cast<double>(lines) / blockSize.x));
   dim3 numBlocks2(ceil(static_cast<double>(K) / blockSize.x));
 
-#pragma omp parallel
 	do{
 		it++;
+
+#pragma omp parallel shared(d_changes, d_maxDist, d_pointsPerClass, d_auxCentroids, d_data, d_centroids, d_classMap, d_distCentroids) private(changes, maxDist)
+{
 
     // Reset variables
       CHECK_CUDA_CALL( cudaMemset(d_changes, 0, sizeof(int)) );
@@ -459,7 +461,7 @@ int main(int argc, char* argv[])
       
       // Syncronize the device
       CHECK_CUDA_CALL( cudaDeviceSynchronize() );
-
+}
 		sprintf(line,"\n[%d] Cluster changes: %d\tMax. centroid distance: %f", it, changes, maxDist);
 		outputMsg = strcat(outputMsg,line);
 
