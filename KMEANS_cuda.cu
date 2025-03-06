@@ -298,7 +298,7 @@ int main(int argc, char* argv[])
 	* argv[6]: Output file. Class assigned to each point of the input file.
   * argv[7]: File where save the computation time
 	* */
-	if(argc !=  7)
+	if(argc !=  8)
 	{
 		fprintf(stderr,"EXECUTION ERROR K-MEANS: Parameters are not correct.\n");
 		fprintf(stderr,"./KMEANS [Input Filename] [Number of clusters] [Number of iterations] [Number of changes] [Threshold] [Output data file] [Computation time file] \n");
@@ -375,8 +375,8 @@ int main(int argc, char* argv[])
 	printf("\tMinimum number of changes: %d [%g%% of %d points]\n", minChanges, atof(argv[4]), lines);
 	printf("\tMaximum centroid precision: %f\n", maxThreshold);
 
-
-  // CUDA memory allocation 
+  //**************************************************
+  // CUDA memory allocation***************************
   
   // Copy costant on device
     CHECK_CUDA_CALL( cudaMemcpyToSymbol(d_samples, &samples, sizeof(int)) );
@@ -404,6 +404,8 @@ int main(int argc, char* argv[])
     CHECK_CUDA_CALL( cudaMemcpy(d_pointsPerClass, pointsPerClass, K*sizeof(int), cudaMemcpyHostToDevice) );
     CHECK_CUDA_CALL( cudaMemcpy(d_auxCentroids, auxCentroids, K*samples*sizeof(float), cudaMemcpyHostToDevice) );
     CHECK_CUDA_CALL( cudaMemcpy(d_distCentroids, distCentroids, K*sizeof(float), cudaMemcpyHostToDevice) );
+
+  // END memory allocation***************************
 	
 	//END CLOCK*****************************************
 	end = omp_get_wtime();
@@ -434,45 +436,40 @@ int main(int argc, char* argv[])
   dim3 numBlocks(ceil(static_cast<double>(lines) / blockSize.x));
   dim3 numBlocks2(ceil(static_cast<double>(K) / blockSize.x));
 
-#pragma omp parallel shared(it, changes, maxDist)
+#pragma omp parallel
 	do{
+
+#pragma omp single {
 		it++;
-	
-      //1. Calculate the distance from each point to the centroid
-      //Assign each point to the nearest centroid.
-    #pragma omp single
-    {
+
+    // Reset variables
       CHECK_CUDA_CALL( cudaMemset(d_changes, 0, sizeof(int)) );
       CHECK_CUDA_CALL( cudaMemset(d_maxDist, FLT_MIN, sizeof(float)) );
       CHECK_CUDA_CALL( cudaMemset(d_pointsPerClass, 0, K*sizeof(int)) );
       CHECK_CUDA_CALL( cudaMemset(d_auxCentroids, 0, K*samples*sizeof(float)) );
-    }
-
-      // Syncronize the device
-      CHECK_CUDA_CALL( cudaDeviceSynchronize() );
+}
 
       assign_centroids<<<numBlocks, blockSize>>>(d_data, d_centroids, d_classMap, d_changes, d_pointsPerClass, d_auxCentroids);
       CHECK_CUDA_LAST();
 
+      max_step<<<numBlocks2, blockSize>>>(d_auxCentroids, d_pointsPerClass, d_centroids, d_maxDist, d_distCentroids);
+      CHECK_CUDA_LAST();
+      
+#pragma omp single {
+      CHECK_CUDA_CALL( cudaMemcpy(&changes, d_changes, sizeof(int), cudaMemcpyDeviceToHost) )
+      CHECK_CUDA_CALL( cudaMemcpy(&maxDist, d_maxDist, sizeof(float), cudaMemcpyDeviceToHost) )
+      CHECK_CUDA_CALL( cudaMemcpy(d_centroids, d_auxCentroids, K*samples*sizeof(float), cudaMemcpyHostToDevice) );
+      
       // Syncronize the device
       CHECK_CUDA_CALL( cudaDeviceSynchronize() );
 
-      max_step<<<numBlocks2, blockSize>>>(d_auxCentroids, d_pointsPerClass, d_centroids, d_maxDist, d_distCentroids);
-      CHECK_CUDA_LAST();
-    
-    // Syncronize the device
-    CHECK_CUDA_CALL( cudaDeviceSynchronize() );
-
-    CHECK_CUDA_CALL( cudaMemcpy(&changes, d_changes, sizeof(int), cudaMemcpyDeviceToHost) )
-    CHECK_CUDA_CALL( cudaMemcpy(&maxDist, d_maxDist, sizeof(float), cudaMemcpyDeviceToHost) )
-    CHECK_CUDA_CALL( cudaMemcpy(d_centroids, d_auxCentroids, K*samples*sizeof(float), cudaMemcpyHostToDevice) );
-		
 		sprintf(line,"\n[%d] Cluster changes: %d\tMax. centroid distance: %f", it, changes, maxDist);
 		outputMsg = strcat(outputMsg,line);
+}
 
 	} while((changes>minChanges) && (it<maxIterations) && (maxDist>maxThreshold));
 
-    // Copy d_classMap in classMap
+  // Copy d_classMap in classMap
     CHECK_CUDA_CALL( cudaMemcpy(classMap, d_classMap, lines*sizeof(int), cudaMemcpyDeviceToHost) );
 
 /*
@@ -525,14 +522,14 @@ int main(int argc, char* argv[])
 	free(auxCentroids);
 
   // Free cuda memory
-  CHECK_CUDA_CALL( cudaFree(d_data) );
-  CHECK_CUDA_CALL( cudaFree(d_classMap) );
-  CHECK_CUDA_CALL( cudaFree(d_centroids) );
-  CHECK_CUDA_CALL( cudaFree(d_pointsPerClass) );
-  CHECK_CUDA_CALL( cudaFree(d_auxCentroids) );
-  CHECK_CUDA_CALL( cudaFree(d_maxDist) );
-  CHECK_CUDA_CALL( cudaFree(d_changes) );
-  CHECK_CUDA_CALL( cudaFree(d_distCentroids) );
+    CHECK_CUDA_CALL( cudaFree(d_data) );
+    CHECK_CUDA_CALL( cudaFree(d_classMap) );
+    CHECK_CUDA_CALL( cudaFree(d_centroids) );
+    CHECK_CUDA_CALL( cudaFree(d_pointsPerClass) );
+    CHECK_CUDA_CALL( cudaFree(d_auxCentroids) );
+    CHECK_CUDA_CALL( cudaFree(d_maxDist) );
+    CHECK_CUDA_CALL( cudaFree(d_changes) );
+    CHECK_CUDA_CALL( cudaFree(d_distCentroids) );
 
 	//END CLOCK*****************************************
 	end = omp_get_wtime();
