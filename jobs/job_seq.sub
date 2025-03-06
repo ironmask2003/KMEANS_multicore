@@ -1,0 +1,15 @@
+universe = vanilla
+
+executable = ./KMEANS_seq
+
+arguments = test_files/input100D2.inp 40 100 1 0.0001 output_files/seq/output100D2.txt comp_time/seq/comp_time100D2.txt
+
+output = logs_seq/out_seq.
+error = logs_seq/err_seq.
+log = logs_seq/seq_log.
+
+request_cpus = 1
+
+getenv = True
+
+queue
