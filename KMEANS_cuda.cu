@@ -445,7 +445,7 @@ int main(int argc, char* argv[])
       CHECK_CUDA_CALL( cudaMemset(d_pointsPerClass, 0, K*sizeof(int)) );
       CHECK_CUDA_CALL( cudaMemset(d_auxCentroids, 0, K*samples*sizeof(float)) );
 
-#pragma omp parallel shared(d_changes, d_classMap, d_pointsPerClass, d_auxCentroids)
+#pragma omp parallel
 {
       assign_centroids<<<numBlocks, blockSize>>>(d_data, d_centroids, d_classMap, d_changes, d_pointsPerClass, d_auxCentroids);
       CHECK_CUDA_LAST();
