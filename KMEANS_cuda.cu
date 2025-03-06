@@ -481,11 +481,10 @@ int main(int argc, char* argv[])
 
 	//END CLOCK*****************************************
 	end = omp_get_wtime();
-  printf("\nCiao pre comp_time\n");
 	printf("\nComputation: %f seconds", end - start);
-  printf("ciao\n");
-	writeCompTimeToFile(argv[7], end - start);
   fflush(stdout);
+	
+  writeCompTimeToFile(argv[7], end - start);
 	//**************************************************
 	//START CLOCK***************************************
 	start = omp_get_wtime();
