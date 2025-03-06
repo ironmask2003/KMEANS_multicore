@@ -457,7 +457,9 @@ int main(int argc, char* argv[])
     // Increment the iteration counter
 		it++;
 
-    // Reset of the variables to store the number of changes, the maximum distance between centroids and the number of points per cluster
+    /* Reset of the variables to store the number of changes,
+    * the maximum distance between centroids and the number of points per cluster
+    */
       CHECK_CUDA_CALL(cudaMemset(d_changes, 0, sizeof(int)));
       CHECK_CUDA_CALL(cudaMemset(d_maxDist, FLT_MIN, sizeof(float)));
       CHECK_CUDA_CALL(cudaMemset(d_pointsPerClass, 0, K * sizeof(int)));
@@ -506,14 +508,10 @@ int main(int argc, char* argv[])
 	end = omp_get_wtime();
 	printf("\nComputation: %f seconds", end - start);
   fflush(stdout);
-	
-  // writeCompTimeToFile(argv[7], end - start);
 	//**************************************************
 	//START CLOCK***************************************
 	start = omp_get_wtime();
 	//**************************************************
-
-	
 
 	if (changes <= minChanges) {
 		printf("\n\nTermination condition:\nMinimum number of changes reached: %d [%d]", changes, minChanges);
