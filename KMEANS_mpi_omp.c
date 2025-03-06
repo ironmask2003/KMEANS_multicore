@@ -370,7 +370,9 @@ int main(int argc, char* argv[])
     // Increment the iteration counter
 		it++;
 
-    // Variables to store the number of changes, the maximum distance between centroids and the number of points per cluster
+    /* Reset of the variables to store the number of changes, 
+     * the maximum distance between centroids and the number of points per cluster
+     */
 
 		changes = 0;
 		local_changes = 0;
@@ -381,14 +383,14 @@ int main(int argc, char* argv[])
 		maxDist = FLT_MIN;
 		float local_maxDist = FLT_MIN;
 
-    // Assign each point to the nearest centroid and calculates the mean within each cluster
+    // Assign to each point the nearest cluster
 		#pragma omp parallel for private(j,class,dist,minDist) reduction(+:local_changes) reduction(+:pointsPerClass[:K],auxCentroids[:K*samples])
 		for(i=start_line; i<end_line; i++) {
 			class=1;
 			minDist=FLT_MAX;
 
-      // Assign at each cluster the point that is closer to its centroid
-			for(j=0; j<K; j++) {
+      // Assign the point to the nearest cluster
+      for(j=0; j<K; j++) {
 				dist=euclideanDistance(&data[i*samples], &centroids[j*samples], samples);
 
 				if(dist < minDist) {
@@ -404,7 +406,7 @@ int main(int argc, char* argv[])
       // Assign to point the cluster that is closer to it
 			classMap[i]=class;
 
-      // increment the pointsPerClass counter and calculate the mean of the points in each cluster
+      // Increment the number of points in the cluster and calculate the new centroid
 			pointsPerClass[class-1] = pointsPerClass[class-1] +1;
 			for(j=0; j<samples; j++)
 				auxCentroids[(class-1)*samples+j] += data[i*samples+j];
@@ -422,13 +424,15 @@ int main(int argc, char* argv[])
     // Sum all alements of auxCentroids of all process
 		MPI_Allreduce(MPI_IN_PLACE, auxCentroids, K*samples, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
 
-    // Calculate the maximum distance between the centroids of each cluster
-		#pragma omp parallel for private(j) reduction(max:local_maxDist)
+    // calculate the maximum distance between the older centroids and the new ones
+    #pragma omp parallel for private(j) reduction(max:local_maxDist)
 		for(i=start_K; i<end_K; i++) 
 		{
-			for(j=0; j<samples; j++)
+      // For each data in the cluster calculate the new centroid
+      for(j=0; j<samples; j++)
 				auxCentroids[i*samples+j] /= pointsPerClass[i];
 
+      // Calculate the distance between the older centroid and the new one
 			distCentroids[i] = euclideanDistance(&centroids[i * samples], &auxCentroids[i * samples], samples);
 			if (distCentroids[i] > local_maxDist)
 				local_maxDist = distCentroids[i];
