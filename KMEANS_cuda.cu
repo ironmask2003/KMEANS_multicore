@@ -439,7 +439,7 @@ int main(int argc, char* argv[])
 	do{
 		it++;
 
-#pragma omp parallel reduction(+:d_changes) reduction(max:d_maxDist)
+#pragma omp parallel private(d_changes, d_maxDist)
 {
     // Reset variables
       CHECK_CUDA_CALL( cudaMemset(d_changes, 0, sizeof(int)) );
