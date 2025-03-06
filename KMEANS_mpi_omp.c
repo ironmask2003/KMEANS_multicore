@@ -367,10 +367,16 @@ int main(int argc, char* argv[])
 		//1. Calculate the distance from each point to the centroid
 		//Assign each point to the nearest centroid.
 		changes = 0;
-
 		local_changes = 0;
 
-		#pragma omp parallel for private(j,class,dist,minDist) reduction(+:local_changes)
+		// 2. Recalculates the centroids: calculates the mean within each cluster
+		zeroIntArray(pointsPerClass,K);
+		zeroFloatMatriz(auxCentroids,K,samples);
+
+		maxDist = FLT_MIN;
+		float local_maxDist = FLT_MIN;
+
+		#pragma omp parallel for private(j,class,dist,minDist) reduction(+:local_changes) reduction(+:pointsPerClass[:K],auxCentroids[:K*samples])
 		for(i=start_line; i<end_line; i++)
 		{
 			class=1;
@@ -390,6 +396,11 @@ int main(int argc, char* argv[])
 				local_changes++;
 			}
 			classMap[i]=class;
+
+			pointsPerClass[class-1] = pointsPerClass[class-1] +1;
+			for(j=0; j<samples; j++){
+				auxCentroids[(class-1)*samples+j] += data[i*samples+j];
+			}
 		}
 
 		// Unisce i vari class map di tutti i processi e li manda a tutti i processi
@@ -398,43 +409,27 @@ int main(int argc, char* argv[])
 		// Somma dei local_changes di tutti i processi
 		MPI_Allreduce(&local_changes, &changes, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
-		// 2. Recalculates the centroids: calculates the mean within each cluster
-		zeroIntArray(pointsPerClass,K);
-		zeroFloatMatriz(auxCentroids,K,samples);
-		
-		for(i=start_line; i<end_line; i++) 
-		{
-			class=classMap[i];
-			pointsPerClass[class-1] = pointsPerClass[class-1] +1;
-			for(j=0; j<samples; j++){
-				auxCentroids[(class-1)*samples+j] += data[i*samples+j];
-			}
-		}
-
 		// Somma dei pointsPerClass di tutti i processi
 		MPI_Allreduce(MPI_IN_PLACE, pointsPerClass, K, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+
 		// Somma dei auxCentroids di tutti i processi
 		MPI_Allreduce(MPI_IN_PLACE, auxCentroids, K*samples, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
 
+		#pragma omp parallel for private(j) reduction(max:local_maxDist)
 		for(i=start_K; i<end_K; i++) 
 		{
 			for(j=0; j<samples; j++){
 				auxCentroids[i*samples+j] /= pointsPerClass[i];
 			}
-		}
 
-		// Gather di auxCentroids
-		MPI_Allgather(MPI_IN_PLACE, local_K * samples, MPI_FLOAT, auxCentroids, local_K * samples, MPI_FLOAT, MPI_COMM_WORLD);
-		
-		maxDist = FLT_MIN;
-		float local_maxDist = FLT_MIN;
-		#pragma omp parallel for reduction(max:local_maxDist)
-		for (i = start_K; i < end_K; i++) {
 			distCentroids[i] = euclideanDistance(&centroids[i * samples], &auxCentroids[i * samples], samples);
 			if (distCentroids[i] > local_maxDist) {
 				local_maxDist = distCentroids[i];
 			}
 		}
+
+		// Gather di auxCentroids
+		MPI_Allgather(MPI_IN_PLACE, local_K * samples, MPI_FLOAT, auxCentroids, local_K * samples, MPI_FLOAT, MPI_COMM_WORLD);
 
 		// Trova il massimo tra i massimi locali
 		MPI_Allreduce(&local_maxDist, &maxDist, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD);
