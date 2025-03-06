@@ -436,37 +436,37 @@ int main(int argc, char* argv[])
   dim3 numBlocks(ceil(static_cast<double>(lines) / blockSize.x));
   dim3 numBlocks2(ceil(static_cast<double>(K) / blockSize.x));
 
-	do{
+  #pragma omp parallel
+	do {
+	
+	#pragma omp single
+	{
 		it++;
 
-    // Reset variables
-      CHECK_CUDA_CALL( cudaMemset(d_changes, 0, sizeof(int)) );
-      CHECK_CUDA_CALL( cudaMemset(d_maxDist, FLT_MIN, sizeof(float)) );
-      CHECK_CUDA_CALL( cudaMemset(d_pointsPerClass, 0, K*sizeof(int)) );
-      CHECK_CUDA_CALL( cudaMemset(d_auxCentroids, 0, K*samples*sizeof(float)) );
+		// Reset variables
+		CHECK_CUDA_CALL(cudaMemset(d_changes, 0, sizeof(int)));
+		CHECK_CUDA_CALL(cudaMemset(d_maxDist, FLT_MIN, sizeof(float)));
+		CHECK_CUDA_CALL(cudaMemset(d_pointsPerClass, 0, K * sizeof(int)));
+		CHECK_CUDA_CALL(cudaMemset(d_auxCentroids, 0, K * samples * sizeof(float)));
 
-#pragma omp parallel
-{
-      assign_centroids<<<numBlocks, blockSize>>>(d_data, d_centroids, d_classMap, d_changes, d_pointsPerClass, d_auxCentroids);
-      CHECK_CUDA_LAST();
+		assign_centroids<<<numBlocks, blockSize>>>(d_data, d_centroids, d_classMap, d_changes, d_pointsPerClass, d_auxCentroids);
+		CHECK_CUDA_LAST();
 
-#pragma omp barrier
+		max_step<<<numBlocks2, blockSize>>>(d_auxCentroids, d_pointsPerClass, d_centroids, d_maxDist, d_distCentroids);
+		CHECK_CUDA_LAST();
 
-      max_step<<<numBlocks2, blockSize>>>(d_auxCentroids, d_pointsPerClass, d_centroids, d_maxDist, d_distCentroids);
-      CHECK_CUDA_LAST();
-}
+		CHECK_CUDA_CALL(cudaMemcpy(&changes, d_changes, sizeof(int), cudaMemcpyDeviceToHost));
+		CHECK_CUDA_CALL(cudaMemcpy(&maxDist, d_maxDist, sizeof(float), cudaMemcpyDeviceToHost));
+		CHECK_CUDA_CALL(cudaMemcpy(d_centroids, d_auxCentroids, K * samples * sizeof(float), cudaMemcpyHostToDevice));
 
-      CHECK_CUDA_CALL( cudaMemcpy(&changes, d_changes, sizeof(int), cudaMemcpyDeviceToHost) )
-      CHECK_CUDA_CALL( cudaMemcpy(&maxDist, d_maxDist, sizeof(float), cudaMemcpyDeviceToHost) )
-      CHECK_CUDA_CALL( cudaMemcpy(d_centroids, d_auxCentroids, K*samples*sizeof(float), cudaMemcpyHostToDevice) );
+		// Synchronize the device
+		CHECK_CUDA_CALL(cudaDeviceSynchronize());
 
-    // Syncronize the device
-    CHECK_CUDA_CALL( cudaDeviceSynchronize() );
-
-		sprintf(line,"\n[%d] Cluster changes: %d\tMax. centroid distance: %f", it, changes, maxDist);
-		outputMsg = strcat(outputMsg,line);
-
-	} while((changes>minChanges) && (it<maxIterations) && (maxDist>maxThreshold));
+		sprintf(line, "\n[%d] Cluster changes: %d\tMax. centroid distance: %f", it, changes, maxDist);
+		outputMsg = strcat(outputMsg, line);
+	}
+	
+	} while ((changes > minChanges) && (it < maxIterations) && (maxDist > maxThreshold));
 
   // Copy d_classMap in classMap
     CHECK_CUDA_CALL( cudaMemcpy(classMap, d_classMap, lines*sizeof(int), cudaMemcpyDeviceToHost) );
