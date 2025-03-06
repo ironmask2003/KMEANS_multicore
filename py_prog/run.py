@@ -25,7 +25,7 @@ def exec_file(file, test):
 
 def run_test(vers, test, comp_times):
     # Esecuzione della versione scelta per 100 volte
-    sh_file = f"{vers}_run.sh"
+    sh_file = f"bash_file/{vers}_run.sh"
     exec_file(sh_file, test)
     comp_times.append(take_num(f"comp_time/{vers}/comp_time{test}.txt"))
 

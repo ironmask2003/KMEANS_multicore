@@ -205,8 +205,12 @@ void zeroIntArray(int *array, int size)
 void writeCompTimeToFile(char *filename, float value) {
   FILE *fp;
   fp = fopen(filename, "w");
-  fprintf(fp, "%f", value);
   fclose(fp);
+
+  // Run a bash command
+  char command[256];
+  sprintf(command, "echo %f >> %s", value, filename);
+  system(command);
 }
 
 int main(int argc, char* argv[])

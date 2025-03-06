@@ -434,15 +434,19 @@ int main(int argc, char* argv[])
   dim3 numBlocks(ceil(static_cast<double>(lines) / blockSize.x));
   dim3 numBlocks2(ceil(static_cast<double>(K) / blockSize.x));
 
+#pragma omp parallel shared(it, changes, maxDist)
 	do{
 		it++;
 	
       //1. Calculate the distance from each point to the centroid
       //Assign each point to the nearest centroid.
+    #pragma omp single
+    {
       CHECK_CUDA_CALL( cudaMemset(d_changes, 0, sizeof(int)) );
       CHECK_CUDA_CALL( cudaMemset(d_maxDist, FLT_MIN, sizeof(float)) );
       CHECK_CUDA_CALL( cudaMemset(d_pointsPerClass, 0, K*sizeof(int)) );
       CHECK_CUDA_CALL( cudaMemset(d_auxCentroids, 0, K*samples*sizeof(float)) );
+    }
 
       // Syncronize the device
       CHECK_CUDA_CALL( cudaDeviceSynchronize() );
