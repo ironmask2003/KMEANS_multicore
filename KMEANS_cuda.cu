@@ -469,8 +469,6 @@ int main(int argc, char* argv[])
   // Copy d_classMap in classMap
     CHECK_CUDA_CALL( cudaMemcpy(classMap, d_classMap, lines*sizeof(int), cudaMemcpyDeviceToHost) );
 
-  printf("ciao\n");
-
 /*
  *
  * STOP HERE: DO NOT CHANGE THE CODE BELOW THIS POINT
@@ -481,8 +479,12 @@ int main(int argc, char* argv[])
 
 	CHECK_CUDA_CALL( cudaDeviceSynchronize() );
 
+  printf("ciao\n");
+
+
 	//END CLOCK*****************************************
 	end = omp_get_wtime();
+  printf("ciao pre comp_time\n");
 	printf("\nComputation: %f seconds", end - start);
 	writeCompTimeToFile(argv[7], end - start);
   fflush(stdout);
