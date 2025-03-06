@@ -436,7 +436,7 @@ int main(int argc, char* argv[])
   dim3 numBlocks(ceil(static_cast<double>(lines) / blockSize.x));
   dim3 numBlocks2(ceil(static_cast<double>(K) / blockSize.x));
 
-  #pragma omp parallel shared(it, changes, maxDist, outputMsg)
+  #pragma omp parallel shared(it, changes, maxDist, outputMsg) private(numBlocks, numBlocks2)
 	do {
 	
 	#pragma omp single
@@ -466,7 +466,7 @@ int main(int argc, char* argv[])
 		CHECK_CUDA_CALL(cudaMemcpy(&changes, d_changes, sizeof(int), cudaMemcpyDeviceToHost));
 		CHECK_CUDA_CALL(cudaMemcpy(&maxDist, d_maxDist, sizeof(float), cudaMemcpyDeviceToHost));
 		CHECK_CUDA_CALL(cudaMemcpy(d_centroids, d_auxCentroids, K * samples * sizeof(float), cudaMemcpyHostToDevice));
-		
+
 		sprintf(line, "\n[%d] Cluster changes: %d\tMax. centroid distance: %f", it, changes, maxDist);
 		outputMsg = strcat(outputMsg, line);
 	}
