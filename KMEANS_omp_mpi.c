@@ -237,12 +237,13 @@ int main(int argc, char* argv[])
 	*          and the next, the maximum distance between centroids is less than this precision, the
 	*          algorithm stops.
 	* argv[6]: Output file. Class assigned to each point of the input file.
-  * argv[7]: File where save the computation time
+ 	* argv[7]: File where save the computation time
+	* argv[8]: Number of threads used for openmp
 	* */
 	if(argc !=  8)
 	{
 		fprintf(stderr,"EXECUTION ERROR K-MEANS: Parameters are not correct.\n");
-		fprintf(stderr,"./KMEANS [Input Filename] [Number of clusters] [Number of iterations] [Number of changes] [Threshold] [Output data file] [Computation time file] \n");
+		fprintf(stderr,"./KMEANS [Input Filename] [Number of clusters] [Number of iterations] [Number of changes] [Threshold] [Output data file] [Computation time file] [Number of OMP threads] \n");
 		fflush(stderr);
 		MPI_Abort( MPI_COMM_WORLD, EXIT_FAILURE );
 	}
@@ -364,6 +365,9 @@ int main(int argc, char* argv[])
   // Start and end of the clusters assigned to each process
 	int start_K = rank * local_K;
 	int end_K = (rank == size - 1) ? K : start_K + local_K;
+
+	// Set number of threads
+	omp_set_num_threads(atoi(argv[8]));
 
 	do{
 
