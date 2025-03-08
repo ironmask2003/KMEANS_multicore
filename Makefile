@@ -19,7 +19,7 @@ FLAGS=-O3 -Wall
 LIBS=-lm
 
 # Targets to build
-OBJS=KMEANS_seq KMEANS_omp KMEANS_mpi KMEANS_cuda KMEANS_mpi_omp
+OBJS=KMEANS_seq KMEANS_omp KMEANS_mpi KMEANS_cuda KMEANS_omp_mpi
 
 # Rules. By default show help
 help:
