@@ -240,7 +240,7 @@ int main(int argc, char* argv[])
  	* argv[7]: File where save the computation time
 	* argv[8]: Number of threads used for openmp
 	* */
-	if(argc !=  8)
+	if(argc !=  9)
 	{
 		fprintf(stderr,"EXECUTION ERROR K-MEANS: Parameters are not correct.\n");
 		fprintf(stderr,"./KMEANS [Input Filename] [Number of clusters] [Number of iterations] [Number of changes] [Threshold] [Output data file] [Computation time file] [Number of OMP threads] \n");
@@ -469,7 +469,7 @@ int main(int argc, char* argv[])
 	//END CLOCK*****************************************
 	end = MPI_Wtime();
 	printf("\nComputation of rank %d: %f seconds", rank, end - start);
-  if (rank == 0) writeCompTimeToFile(argv[7], end - start);
+  	if (rank == 0) writeCompTimeToFile(argv[7], end - start);
 	fflush(stdout);
 
 	// Synchronize all processes
