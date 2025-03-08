@@ -230,7 +230,7 @@ int main(int argc, char* argv[])
 	*          and the next, the maximum distance between centroids is less than this precision, the
 	*          algorithm stops.
 	* argv[6]: Output file. Class assigned to each point of the input file.
-  * argv[7]: File where save the computation time
+  	* argv[7]: File where save the computation time
 	* */
 	if(argc !=  8)
 	{
@@ -333,6 +333,7 @@ int main(int argc, char* argv[])
  */
 
 	do{
+		// Increment the iteration counter
 		it++;
 	
 		//1. Calculate the distance from each point to the centroid
@@ -410,8 +411,6 @@ int main(int argc, char* argv[])
 	//START CLOCK***************************************
 	start = clock();
 	//**************************************************
-
-	
 
 	if (changes <= minChanges) {
 		printf("\n\nTermination condition:\nMinimum number of changes reached: %d [%d]", changes, minChanges);
