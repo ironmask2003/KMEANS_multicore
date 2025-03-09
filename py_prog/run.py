@@ -1,3 +1,6 @@
+import os
+
+
 # Function used to check if two files have the same content
 def check_out(file1, file2):
     with open(file1, "r") as f1, open(file2, "r") as f2:
@@ -9,15 +12,19 @@ def check_out(file1, file2):
 
 # Function to set the job file of the MPI+OMP version
 def set_mpi_omp_job_file(vers, test, num_process, num_thread):
+    # Check if logs directory exists
+    if not os.path.exists(f"./jobs/logs_{vers}/"):
+        os.mkdir(f"./jobs/logs_{vers}/")
+
     with open(f"./jobs/job_{vers}.sub", "w") as f:
         f.write("universe = parallel\n\n")
         f.write("executable = openmpiscript.sh\n\n")
         f.write(
-            f"arguments = ../KMEANS_mpi_omp input{test}.inp 40 100 1 0.0001 output_files/{vers}/output{test}.txt comp_time/{vers}/comp_time{test}.csv {num_thread}\n\n"
+            f"arguments = ./KMEANS_mpi_omp input{test}.inp 40 100 1 0.0001 output_files/{vers}/output{test}.txt comp_time/{vers}/comp_time{test}.csv {num_thread}\n\n"
         )
         f.write("should_transfer_files = YES\n\n")
         f.write(
-            f"transfer_input_files = ../KMEANS_{vers} ../test_files/input{test}.inp\n\n"
+            f"transfer_input_files = ../KMEANS_{vers}, ../test_files/input{test}.inp\n\n"
         )
         f.write(f"output = logs_{vers}/out.$(NODE)\n\n")
         f.write(f"error = logs_{vers}/err.$(NODE)\n\n")
@@ -30,6 +37,10 @@ def set_mpi_omp_job_file(vers, test, num_process, num_thread):
 
 # Function used to set the job file of the CUDA version
 def set_cuda_job_file(vers, test):
+    # Check if logs directory exists
+    if not os.path.exists(f"./jobs/logs_{vers}/"):
+        os.mkdir(f"./jobs/logs_{vers}/")
+
     with open(f"./jobs/job_{vers}.sub", "w") as f:
         f.write("universe = vanilla\n\n")
         f.write("executable = ../KMEANS_cuda\n\n")
@@ -53,16 +64,26 @@ def exec_job(job_file, vers):
     return
 
 
+def run_sh(bash_file, test):
+    import subprocess
+
+    subprocess.run(["sh", bash_file, test])
+    return
+
+
 # Function to run the test
 def run_test(vers, test, num_process, num_thread):
     if vers == "omp_mpi":
         set_mpi_omp_job_file(vers, test, num_process, num_thread)
-    else:
+        job_file = f"./jobs/job_{vers}.sub"
+        exec_job(job_file, test)
+    elif vers == "cuda":
         set_cuda_job_file(vers, test)
-
-    # Run the bash file
-    job_file = f"./jobs/job_{vers}.sub"
-    exec_job(job_file, test)
+        job_file = f"./jobs/job_{vers}.sub"
+        exec_job(job_file, test)
+    else:
+        bash_file = f"bash_file/{vers}_run.sh"
+        run_sh(bash_file, test)
 
     # Check if the output files between sequential and MPI+OMP are the same
     return check_out(
