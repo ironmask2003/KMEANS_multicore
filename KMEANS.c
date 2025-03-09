@@ -203,10 +203,10 @@ void zeroIntArray(int *array, int size)
 
 // Funzione che scrive su un file il un valore preso in input
 void writeCompTimeToFile(char *filename, float value) {
-  // Run a bash command
-  char command[256];
-  sprintf(command, "echo %f >> %s", value, filename);
-  system(command);
+  FILE *fp;
+  fp = fopen(filename, "w");
+  fprintf(fp, "%f", value);
+  fclose(fp);
 }
 
 int main(int argc, char* argv[])

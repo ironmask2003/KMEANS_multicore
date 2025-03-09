@@ -205,10 +205,14 @@ void zeroIntArray(int *array, int size)
 
 // Function used to write the computation time to a file
 void writeCompTimeToFile(char *filename, float value) {
-  // Run a bash command
-  char command[256];
-  sprintf(command, "echo %f >> %s", value, filename);
-  system(command);
+  // Write value in the last line of the file
+  FILE *fp = fopen(filename, "a");
+  if (fp == NULL) {
+    fprintf(stderr, "Error opening file %s\n", filename);
+    return;
+  }
+  fprintf(fp, "%f\n", value);
+  fclose(fp);
 }
 
 int main(int argc, char* argv[])

@@ -283,11 +283,15 @@ __global__ void max_step(float* d_auxCentroids, int* d_pointsPerClass, float* d_
     }
 }
 
-// Funzione che scrive su un file il un valore preso in input
+// Function used to write the computation time to a file
 void writeCompTimeToFile(char *filename, float value) {
-  FILE *fp;
-  fp = fopen(filename, "w");
-  fprintf(fp, "%f", value);
+  // Write value in the last line of the file
+  FILE *fp = fopen(filename, "a");
+  if (fp == NULL) {
+    fprintf(stderr, "Error opening file %s\n", filename);
+    return;
+  }
+  fprintf(fp, "%f\n", value);
   fclose(fp);
 }
 
