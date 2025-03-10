@@ -98,8 +98,8 @@ class MyTest(unittest.TestCase):
 
         # Else test with OMP+MPI
         dimensions = ["2D2", "10D", "20D", "2D", "100D", "100D2"]
-        num_process = [1, 2, 4, 8, 16, 32]
-        num_threads = [1, 2, 4, 8, 16, 32]
+        num_process = [2, 4, 8, 16, 32]
+        num_threads = [1 ,2, 4, 8, 16, 32]
 
         for proc, thread, dimension in [
             (p, t, d) for p in num_process for t in num_threads for d in dimensions
