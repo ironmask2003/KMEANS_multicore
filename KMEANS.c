@@ -203,9 +203,13 @@ void zeroIntArray(int *array, int size)
 
 // Funzione che scrive su un file il un valore preso in input
 void writeCompTimeToFile(char *filename, float value) {
-  FILE *fp;
-  fp = fopen(filename, "w");
-  fprintf(fp, "%f", value);
+  // Write value in the last line of the file
+  FILE *fp = fopen(filename, "a");
+  if (fp == NULL) {
+    fprintf(stderr, "Error opening file %s\n", filename);
+    return;
+  }
+  fprintf(fp, "%f\n", value);
   fclose(fp);
 }
 
@@ -331,7 +335,6 @@ int main(int argc, char* argv[])
  * START HERE: DO NOT CHANGE THE CODE ABOVE THIS POINT
  *
  */
-
 	do{
 		// Increment the iteration counter
 		it++;
