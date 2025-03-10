@@ -1,14 +1,17 @@
 universe = vanilla
 
-# Where should the output/error be saved
-log = logs/cuda_job.log
-output = logs/cuda_job.out
-error = logs/cuda_job.err
+executable = ./KMEANS_cuda
 
-# Request GPU resources
+arguments = test_files/input2D2.inp 40 100 1 0.0001 output_files/cuda/output2D2.txt comp_time/cuda/comp_time2D2.csv
+
+log = jobs/logs_cuda/cuda_job.log
+
+output = jobs/logs_cuda/cuda_job.out
+
+error = jobs/logs_cuda/cuda_job.err
+
 request_gpus = 1
 
-# Specify any environment setup if needed
 getenv = True
 
 queue

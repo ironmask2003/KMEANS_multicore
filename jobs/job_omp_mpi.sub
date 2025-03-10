@@ -1,21 +1,22 @@
 universe = parallel
 
-executable = openmpiscript.sh
+executable = jobs/openmpiscript.sh
 
-arguments = ../KMEANS_omp_mpi input100D.inp 40 100 1 0.0001 output_files/omp_mpi/output100D.txt comp_time/omp_mpi/comp_time100D.csv
+arguments = ./KMEANS_omp_mpi input100D2.inp 40 100 1 0.0001 output100D2.txt comp_time100D2.csv 2
 
 should_transfer_files = YES
 
-transfer_input_files = ../KMEANS_omp_mpi test_files/input100D.inp
+transfer_input_files = KMEANS_omp_mpi, test_files/input100D2.inp 
 
-when_to_transfer_output = on_exit_or_evict
+output = jobs/logs_omp_mpi/out.$(NODE)
 
-output = logs/out.$(NODE)
-error = logs/err.$(NODE)
-log = logs/log
+error = jobs/logs_omp_mpi/err.$(NODE)
 
-machine_count = 2
-request_cpus = 2
+log = jobs/logs_omp_mpi/log
+
+machine_count = 1
+
+request_cpus = 32
 
 getenv = True
 
