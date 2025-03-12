@@ -355,16 +355,15 @@ int main(int argc, char* argv[])
 
   // Local variable used to count the number of changes of each process
 	int local_changes;
-
   // Number of lines assigned to each process
 	int local_lines = lines / size;
+  	int remainder = lines % size;
 
   // Start and end of the lines assigned to each process
-	int start_line = rank * local_lines;
-	int end_line = (rank == size - 1) ? lines : start_line + local_lines;
-
-  // Number of clusters assigned to each process
-	int local_K = K / size;
+  	int start_line = rank * local_lines + (rank < remainder ? rank : remainder);
+  	int end_line = start_line + local_lines + (rank < remainder ? 1 : 0);
+	
+  	int local_K = K / size;
 
   // Start and end of the clusters assigned to each process
 	int start_K = rank * local_K;
