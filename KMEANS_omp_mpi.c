@@ -357,12 +357,23 @@ int main(int argc, char* argv[])
 	int local_changes;
   // Number of lines assigned to each process
 	int local_lines = lines / size;
-  	int remainder = lines % size;
 
   // Start and end of the lines assigned to each process
-  	int start_line = rank * local_lines + (rank < remainder ? rank : remainder);
-  	int end_line = start_line + local_lines + (rank < remainder ? 1 : 0);
-	
+  	int start_line = rank * local_lines;
+  	int end_line = (rank == size - 1) ? lines: start_line + local_lines;
+
+	int *recvcounts = malloc(size * sizeof(int));
+	int *displs = malloc(size * sizeof(int));
+
+	int local_classMap = end_line - start_line;
+	MPI_Allgather(&local_classMap, 1, MPI_INT, recvcounts, 1, MPI_INT, MPI_COMM_WORLD);
+
+	// Calcola gli offset (displacements) nel buffer finale
+	displs[0] = 0;
+	for (int i = 1; i < size; i++) {
+		displs[i] = displs[i - 1] + recvcounts[i - 1];
+	}
+
   	int local_K = K / size;
 
   // Start and end of the clusters assigned to each process
@@ -420,7 +431,7 @@ int main(int argc, char* argv[])
 		}
 
     // Gather of classMap
-		MPI_Allgather(MPI_IN_PLACE, local_lines, MPI_INT, classMap, local_lines, MPI_INT, MPI_COMM_WORLD);
+		MPI_Allgatherv(classMap + start_line, local_classMap, MPI_INT, classMap, recvcounts, displs, MPI_INT, MPI_COMM_WORLD);
 
     // Sum local_changes of all processes
 		MPI_Allreduce(&local_changes, &changes, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
@@ -511,6 +522,8 @@ int main(int argc, char* argv[])
 	free(distCentroids);
 	free(pointsPerClass);
 	free(auxCentroids);
+	free(recvcounts);
+	free(displs);
 
 	//END CLOCK*****************************************
 	end = MPI_Wtime();
