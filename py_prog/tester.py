@@ -41,6 +41,7 @@ class MyTest(unittest.TestCase):
         open(f"./comp_time/{test_type}/comp_time{dimension}.csv", "w").close()
 
         for _ in range(50):
+            print("--- Submitting test ---")
             self.doTest(
                 test_type, dimension, num_process, num_thread
             )  # In sqeuential and cuda test, num_process and num_thread are 0
@@ -98,14 +99,15 @@ class MyTest(unittest.TestCase):
 
         # Else test with OMP+MPI
         dimensions = ["2D2", "10D", "20D", "2D", "100D", "100D2"]
-        num_process = [2, 4, 8, 16, 32]
+        num_process = [16]
         num_threads = [1 ,2, 4, 8, 16, 32]
 
         for proc, thread, dimension in [
             (p, t, d) for p in num_process for t in num_threads for d in dimensions
         ]:
+            print("-------------------------------")
+            print(f"Test with {test_type}, {proc}, {thread} and {dimension}")
             self.running_test(test_type, dimension, proc, thread)
-
 
 if __name__ == "__main__":
     unittest.main()

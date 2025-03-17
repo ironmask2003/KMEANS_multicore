@@ -75,6 +75,7 @@ def exec_job(job_file, vers):
     import subprocess
 
     subprocess.run(["condor_submit", f"{job_file}"])
+    print("Waiting for test")
     if vers == "omp_mpi":
         subprocess.run(["condor_wait", f"jobs/logs_{vers}/log"])
         return
