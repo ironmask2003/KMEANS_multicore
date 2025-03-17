@@ -2,7 +2,7 @@ universe = vanilla
 
 executable = ./KMEANS_seq
 
-arguments = test_files/input100D2.inp 40 100 1 0.0001 output_files/seq/output100D2.txt comp_time/seq/comp_time100D2.csv
+arguments = test_files/input2D2.inp 40 100 1 0.0001 output_files/seq/output2D2.txt comp_time/seq/comp_time2D2.csv
 
 log = jobs/logs_seq/seq_job.log
 

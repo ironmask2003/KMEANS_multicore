@@ -7,8 +7,26 @@
 	Minimum number of changes: 1000 [1% of 100000 points]
 	Maximum centroid precision: 0.000100
 
-Memory allocation of rank 0: 1.115443 seconds
+Memory allocation of rank 0: 1.648419 seconds
 
+Memory allocation of rank 5: 1.648454 seconds
+
+Memory allocation of rank 3: 1.648317 seconds
+
+Memory allocation of rank 7: 1.648471 seconds
+
+Memory allocation of rank 4: 1.648353 seconds
+
+Memory allocation of rank 1: 1.648213 seconds
+
+Memory allocation of rank 2: 1.648372 seconds
+
+Memory allocation of rank 6: 1.648455 seconds
+
+Computation of rank 7: 1.409121 seconds
+Computation of rank 5: 1.409223 seconds
+Computation of rank 3: 1.409249 seconds
+Computation of rank 4: 1.409219 seconds
 [1] Cluster changes: 100000	Max. centroid distance: 466.250244
 [2] Cluster changes: 25348	Max. centroid distance: 29.194607
 [3] Cluster changes: 11090	Max. centroid distance: 14.410816
@@ -77,13 +95,30 @@ Memory allocation of rank 0: 1.115443 seconds
 [66] Cluster changes: 1075	Max. centroid distance: 3.978169
 [67] Cluster changes: 1090	Max. centroid distance: 3.279510
 [68] Cluster changes: 1095	Max. centroid distance: 3.112350
-[69] Cluster changes: 1028	Max. centroid distance: 3.476405
+[69] Cluster
+Computation of rank 1: 1.409269 seconds
+Computation of rank 6: 1.409164 seconds changes: 1028	Max. centroid distance: 3.476405
 [70] Cluster changes: 1018	Max. centroid distance: 3.452568
 [71] Cluster changes: 986	Max. centroid distance: 3.579849
 
-Computation of rank 0: 38.831384 seconds
+Computation of rank 0: 1.409477 seconds
+
 
 Termination condition:
 Minimum number of changes reached: 986 [1000]
+Computation of rank 2: 1.409247 seconds
+Memory deallocation of rank 5: 0.001780 seconds
 
-Memory deallocation of rank 0: 0.013319 seconds
+Memory deallocation of rank 3: 0.002196 seconds
+
+Memory deallocation of rank 6: 0.003345 seconds
+
+Memory deallocation of rank 4: 0.003312 seconds
+
+Memory deallocation of rank 2: 0.005650 seconds
+
+Memory deallocation of rank 7: 0.005689 seconds
+
+Memory deallocation of rank 1: 0.007636 seconds
+
+Memory deallocation of rank 0: 0.014789 seconds
