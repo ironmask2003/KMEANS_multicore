@@ -8,9 +8,9 @@ from run_colab import main
 # Function used to add AvgTime to csv file
 def addAvgTime(test_type, avgTimes):
     # Check if the path not exist
-    if not os.path.exists(f"./{test_type}.csv"):
+    if not os.path.exists(f"./{test_type}_colab.csv"):
         # Create the file and write the header
-        open(f"./{test_type}.csv", "w").close()
+        open(f"./{test_type}_colab.csv", "w").close()
         subprocess.run(
             [
                 f"echo AvgTime2D2, AvgTime10D, AvgTime20D, AvgTime2D, AvgTime100D, AvgTime100D2 >> ./{test_type}.csv"
