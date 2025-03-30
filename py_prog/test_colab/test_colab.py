@@ -30,11 +30,7 @@ class ColabTest(unittest.TestCase):
     def doTest(self, vers, test):
         main(vers, test)
 
-    def test(self):
-        test_type = input("Enter test type: ")
-        subprocess.run(["make", f"KMEANS_{test_type}"])
-        dimensions = ["2D2", "10D", "20D", "2D", "100D", "100D2"]
-
+    def main_test(self, dimensions, test_type):
         avgTimes = []
 
         for dim in dimensions:
@@ -46,6 +42,7 @@ class ColabTest(unittest.TestCase):
             open(f"./comp_time/{test_type}/comp_time{dim}.csv", "w").close()
             for _ in range(25):
                 self.doTest(test_type, dim)
+
             # Array to store all times
             times = []
 
@@ -61,6 +58,21 @@ class ColabTest(unittest.TestCase):
             avgTimes.append(avgTime)
 
         addAvgTime(test_type, avgTimes)
+
+    def test(self):
+        test_type = input("Enter test type: ")
+
+        dimensions = ["2D2", "10D", "20D", "2D", "100D", "100D2"]
+
+        if test_type == "all":
+            subprocess.run(["make", "KMEANS_seq"])
+            self.main_test(dimensions, "seq")
+
+            subprocess.run(["make", "KMEANS_cuda"])
+            self.main_test(dimensions, "cuda")
+        else:
+            subprocess.run(["make", f"KMEANS_{test_type}"])
+            self.main_test(dimensions, test_type)
 
 
 if __name__ == "__main__":
