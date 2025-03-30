@@ -65,12 +65,17 @@ class ColabTest(unittest.TestCase):
         dimensions = ["2D2", "10D", "20D", "2D", "100D", "100D2"]
 
         if test_type == "all":
+            print("Running sequential test")
+            print("-----------------------------------------")
             subprocess.run(["make", "KMEANS_seq"])
             self.main_test(dimensions, "seq")
 
+            print("Running CUDA test")
+            print("-----------------------------------------")
             subprocess.run(["make", "KMEANS_cuda"])
             self.main_test(dimensions, "cuda")
         else:
+            print(f"Running {test_type} test")
             subprocess.run(["make", f"KMEANS_{test_type}"])
             self.main_test(dimensions, test_type)
 
