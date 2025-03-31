@@ -13,14 +13,14 @@ def addAvgTime(test_type, avgTimes):
         open(f"./{test_type}_colab.csv", "w").close()
         subprocess.run(
             [
-                f"echo AvgTime2D2, AvgTime10D, AvgTime20D, AvgTime2D, AvgTime100D, AvgTime100D2 >> ./{test_type}.csv"
+                f"echo AvgTime2D2, AvgTime10D, AvgTime20D, AvgTime2D, AvgTime100D, AvgTime100D2 >> ./{test_type}_colab.csv"
             ],
             shell=True,
         )
 
     subprocess.run(
         [
-            f"echo {avgTimes[0]}, {avgTimes[1]}, {avgTimes[2]}, {avgTimes[3]}, {avgTimes[4]}, {avgTimes[5]} >> ./{test_type}.csv"
+            f"echo {avgTimes[0]}, {avgTimes[1]}, {avgTimes[2]}, {avgTimes[3]}, {avgTimes[4]}, {avgTimes[5]} >> ./{test_type}_colab.csv"
         ],
         shell=True,
     )
