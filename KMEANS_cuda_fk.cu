@@ -185,6 +185,17 @@ void initCentroids(const float *data, float* centroids, int* centroidPos, int sa
 Function euclideanDistance: Euclidean distance
 This function could be modified
 */
+float euclideanDistance(float *point, float *center, int samples)
+{
+	float dist=0.0;
+	for(int i=0; i<samples; i++) 
+	{
+		dist = fmaf((point[i]-center[i]), (point[i]-center[i]), dist);
+	}
+  dist = sqrt(dist);
+  return(dist);
+}
+
 __device__ float d_euclideanDistance(float *point, float *center, int samples)
 {
 	float dist=0.0;
@@ -422,6 +433,8 @@ int main(int argc, char* argv[])
 	int it=0;
 	int changes = 0;
 	float maxDist;
+
+  int j;
 
 /*
  *
