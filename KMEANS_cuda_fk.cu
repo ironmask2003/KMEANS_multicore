@@ -470,8 +470,8 @@ int main(int argc, char* argv[])
       CHECK_CUDA_CALL(cudaMemcpy(&changes, d_changes, sizeof(int), cudaMemcpyDeviceToHost));
 
     // Copy the new centroids in the centroids variable
-      CHECK_CUDA_CALL(cudaMemcpy(centroids, d_auxCentroids, K * samples * sizeof(float), cudaMemcpyHostToDevice));
-      CHECK_CUDA_CALL(cudaMemcpy(pointsPerClass, d_pointsPerClass, K * sizeof(int), cudaMemcpyHostToDevice));
+      CHECK_CUDA_CALL(cudaMemcpy(centroids, d_auxCentroids, K * samples * sizeof(float), cudaMemcpyDeviceToHost));
+      CHECK_CUDA_CALL(cudaMemcpy(pointsPerClass, d_pointsPerClass, K * sizeof(int), cudaMemcpyDeviceToHost));
 
     // Synchronize the device
       CHECK_CUDA_CALL(cudaDeviceSynchronize());
