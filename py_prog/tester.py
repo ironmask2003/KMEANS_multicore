@@ -3,6 +3,7 @@ import os
 import subprocess
 
 from run import main
+from gen_plots import gen_plot
 
 
 # Function used to add AvgTime to csv file
@@ -144,6 +145,10 @@ class MyTest(unittest.TestCase):
         print("-----------------------------------------")
         subprocess.run(["make", "KMEANS_omp_mpi"])
         self.main_test(dimensions, "omp_mpi")
+
+        print("Generating plots")
+        print("-----------------------------------------")
+        gen_plot()
 
 
 if __name__ == "__main__":
