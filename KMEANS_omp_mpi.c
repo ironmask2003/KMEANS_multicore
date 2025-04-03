@@ -359,8 +359,8 @@ int main(int argc, char* argv[])
 	int local_lines = lines / size;
 
   // Start and end of the lines assigned to each process
-  	int start_line = rank * local_lines;
-  	int end_line = (rank == size - 1) ? lines: start_line + local_lines;
+  int start_line = rank * local_lines;
+  int end_line = (rank == size - 1) ? lines: start_line + local_lines;
 
 	int *recvcounts = malloc(size * sizeof(int));
 	int *displs = malloc(size * sizeof(int));
