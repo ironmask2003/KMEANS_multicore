@@ -28,7 +28,7 @@ def addAvgTime(test_type, avgTimes):
 
 class ColabTest(unittest.TestCase):
     def doTest(self, vers, test):
-        main(vers, test)
+        self.assertEqual(main(vers, test), True)
 
     def main_test(self, dimensions, test_type):
         avgTimes = []

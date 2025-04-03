@@ -2,112 +2,94 @@ import unittest
 import os
 import subprocess
 
-from run import run_test
+from run import main
 
 
 # Function used to add AvgTime to csv file
-def addAvgTime(test_type, dimension, avgTime, num_process, num_thread):
+def addAvgTime(test_type, avgTimes, pcs, thread):
     # Check if the path not exist
-    if not os.path.exists(f"./{test_type}.csv"):
+    if not os.path.exists(f"./test_csv/slurm/{test_type}_slurm.csv"):
+        os.makedirs("./test_csv/slurm", exist_ok=True)
         # Create the file and write the header
-        open(f"./{test_type}.csv", "w").close()
+        open(f"./test_csv/slurm/{test_type}_slurm.csv", "w").close()
+        if test_type != "omp_mpi":
+            subprocess.run(
+                [
+                    f"echo AvgTime2D2, AvgTime10D, AvgTime20D, AvgTime2D, AvgTime100D, AvgTime100D2 >> ./test_csv/slurm/{test_type}_slurm.csv"
+                ],
+                shell=True,
+            )
+        else:
+            subprocess.run(
+                [
+                    f"echo Number of Process, Number of Thread, AvgTime2D2, AvgTime10D, AvgTime20D, AvgTime2D, AvgTime100D, AvgTime100D2 >> ./test_csv/slurm/{test_type}_slurm.csv"
+                ],
+                shell=True,
+            )
+
+    if test_type != "omp_mpi":
         subprocess.run(
             [
-                f"echo Test dimension, Number of Process, Number of thread, AvgTime >> ./{test_type}.csv"
+                f"echo {avgTimes[0]}, {avgTimes[1]}, {avgTimes[2]}, {avgTimes[3]}, {avgTimes[4]}, {avgTimes[5]} >> ./test_csv/slurm/{test_type}_slurm.csv"
+            ],
+            shell=True,
+        )
+    else:
+        subprocess.run(
+            [
+                f"echo {pcs} {thread} {avgTimes[0]}, {avgTimes[1]}, {avgTimes[2]}, {avgTimes[3]}, {avgTimes[4]}, {avgTimes[5]} >> ./test_csv/slurm/{test_type}_slurm.csv"
             ],
             shell=True,
         )
 
-    # Write in the final csv file the AvgTime of the test
-    subprocess.run(
-        [
-            f"echo {dimension}, {num_process}, {num_thread}, {avgTime} >> ./{test_type}.csv"
-        ],
-        shell=True,
-    )
-
 
 class MyTest(unittest.TestCase):
-    # Function to run the test
-    def doTest(self, test_type, dimension, num_process, num_thread):
-        self.assertEqual(run_test(test_type, dimension, num_process, num_thread), True)
+    def doTest(self, vers: str, test: str, pcs: int, thread: int):
+        self.assertEqual(main(vers, test, pcs, thread), True)
 
-    def running_test(self, test_type, dimension, num_process, num_thread):
-        # Remove comp_time files if exist
-        if os.path.exists(f"./comp_time/{test_type}/comp_time{dimension}.csv"):
-            os.remove(f"./comp_time/{test_type}/comp_time{dimension}.csv")
+    def main_test(self, dimensions: list[str], vers: str):
+        # Check the version of the program to run
+        if vers == "seq":
+            # Array of avgTime for each test
+            avgTimes = []
 
-        # Create comp_time files
-        open(f"./comp_time/{test_type}/comp_time{dimension}.csv", "w").close()
+            # iterate over all test file
+            for dim in dimensions:
+                # Remove comp_time files if exist
+                if os.path.exists(f"./comp_time/{vers}/comp_time{dim}.csv"):
+                    os.remove(f"./comp_time/{vers}/comp_time{dim}.csv")
 
-        for _ in range(50):
-            print("--- Submitting test ---")
-            self.doTest(
-                test_type, dimension, num_process, num_thread
-            )  # In sqeuential and cuda test, num_process and num_thread are 0
-            # Check if the test is with omp_mpi for move the comp_tine in the correct directory
-            if test_type == "omp_mpi":
-                # Move comp_time in the correct file
-                with open(f"./comp_time{dimension}.csv", "r") as f:
-                    comp_time = f.readline().strip()
-                
-                with open(f"./comp_time/{test_type}/comp_time{dimension}.csv", "a") as f:
-                    f.write(comp_time + "\n")
+                # Create comp_time files
+                open(f"./comp_time/{vers}/comp_time{dim}.csv", "w").close()
 
-        # Array to store all times
-        times = []
+                print(f"Start testing with {dim}")
+                print("-----------------------------------------")
+                for _ in range(25):
+                    self.doTest(vers, dim, 0, 0)
 
-        # Open comp_time file and read all lines
-        with open(f"./comp_time/{test_type}/comp_time{dimension}.csv", "r") as f:
-            times = f.readlines()
+                times = []
 
-        # Convert all element in the array to float
-        times = [float(time) for time in times]
+                # Open comp_time file and read all lines
+                with open(f"./comp_time/{vers}/comp_time{dim}.csv", "r") as f:
+                    times = f.readlines()
 
-        # AvgTime
-        avgTime = sum(times) / len(times)
-        addAvgTime(test_type, dimension, avgTime, num_process, num_thread)
+                # Convert all element in the array to float
+                times = [float(time) for time in times]
 
-    # Function to test the CUDA version
-    def test_cuda(self):
-        test_type = "cuda"
-        dimensions = ["2D2", "10D", "20D", "2D", "100D", "100D2"]
+                # AvgTime
+                avgTime = sum(times) / len(times)
+                avgTimes.append(avgTime)
 
-        for dimension in dimensions:
-            self.running_test(test_type, dimension, 0, 0)
+            addAvgTime(vers, avgTimes, 0, 0)
 
-    # Sequential test
-    def test_sequential(self):
-        test_type = "seq"
-        dimensions = ["2D2", "10D", "20D", "2D", "100D", "100D2"]
-
-        for dimension in dimensions:
-            self.running_test(test_type, dimension, 0, 0)
-
-    # Main function to run the test
     def test(self):
-        test_type = input("Enter test type: ")
-        subprocess.run(["make", f"KMEANS_{test_type}"])
-
-        # Check if the test is with cuda
-        if test_type == "cuda":
-            return self.test_cuda()
-        # Check if the test is teh sequential
-        elif test_type == "seq":
-            self.test_sequential()
-            test_type = "omp_mpi"
-
-        # Else test with OMP+MPI
         dimensions = ["2D2", "10D", "20D", "2D", "100D", "100D2"]
-        num_process = [16]
-        num_threads = [1 ,2, 4, 8, 16, 32]
 
-        for proc, thread, dimension in [
-            (p, t, d) for p in num_process for t in num_threads for d in dimensions
-        ]:
-            print("-------------------------------")
-            print(f"Test with {test_type}, {proc}, {thread} and {dimension}")
-            self.running_test(test_type, dimension, proc, thread)
+        print("Running sequential test")
+        print("-----------------------------------------")
+        subprocess.run(["make", "KMEANS_seq"])
+        self.main_test(dimensions, "seq")
+
 
 if __name__ == "__main__":
     unittest.main()
