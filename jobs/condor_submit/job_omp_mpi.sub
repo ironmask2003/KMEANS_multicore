@@ -1,0 +1,23 @@
+universe = parallel
+
+executable = jobs/openmpiscript.sh
+
+arguments = ./KMEANS_omp_mpi input2D2.inp 40 100 1 0.0001 output2D2.txt comp_time2D2.csv 1
+
+should_transfer_files = YES
+
+transfer_input_files = KMEANS_omp_mpi, test_files/input2D2.inp 
+
+output = jobs/logs_omp_mpi/out.$(NODE)
+
+error = jobs/logs_omp_mpi/err.$(NODE)
+
+log = jobs/logs_omp_mpi/log
+
+machine_count = 16
+
+request_cpus = 32
+
+getenv = True
+
+queue
