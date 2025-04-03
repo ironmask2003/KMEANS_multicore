@@ -47,8 +47,8 @@ def main(vers: str, test: str, pcs: int, thread: int):
     # Run job with sbatch command
     subprocess.run(["sbatch", "jobs/job.slurm"])
 
+    print("Waiting for job to finish...")
     while True:
-        print("Waiting for job to finish...")
         time_temp = []
         # Open comp_time file and read all lines
         with open(f"./comp_time/{vers}/comp_time{test}.csv", "r") as f:
