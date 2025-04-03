@@ -21,7 +21,7 @@ def take_time(filename):
 def take_time_omp_mpi(num_process):
     times = {1: [], 2: [], 4: [], 8: [], 16: [], 32: []}
     # Open csv file
-    with open(f"test_csv/omp_mpi_{num_process}.csv", "r") as csvfile:
+    with open(f"test_csv/slurm/omp_mpi_{num_process}_slurm.csv", "r") as csvfile:
         csvreader = csv.reader(csvfile)
         # Skip header
         csvreader.__next__()
@@ -126,7 +126,7 @@ def omp_mpi(seq_times):
         plt.legend()
 
         plt.savefig(
-            f"test_csv/plots/speedup/plot_omp_mpi_{pcs}.png",
+            f"test_csv/plots/speedup/plot_omp_mpi_{pcs}_slurm.png",
             dpi=300,
             bbox_inches="tight",
         )
@@ -175,7 +175,7 @@ def omp_mpi(seq_times):
         plt.legend()
 
         plt.savefig(
-            f"test_csv/plots/efficency/plot_omp_mpi_{pcs}.png",
+            f"test_csv/plots/efficency/plot_omp_mpi_{pcs}_slurm.png",
             dpi=300,
             bbox_inches="tight",
         )
@@ -183,7 +183,7 @@ def omp_mpi(seq_times):
 
 
 def cuda(seq_times):
-    cuda_times = take_time("test_csv/cuda_colab.csv")
+    cuda_times = take_time("test_csv/slurm/cuda_slurm.csv")
 
     tests = [
         "2D2input.inp",
@@ -209,17 +209,16 @@ def cuda(seq_times):
     plt.grid(True, linestyle="--", alpha=0.6)
 
     plt.savefig(
-        "test_csv/plots/speedup/plot_cuda.png",
+        "test_csv/plots/speedup/plot_cuda_slurm.png",
         dpi=300,
         bbox_inches="tight",
     )
     plt.clf()
 
 
-if __name__ == "__main__":
+def gen_plot():
     # Calculate efficency of omp_mpi version
-    seq_times = take_time("test_csv/seq.csv")
-    seq_times_colab = take_time("test_csv/seq_colab.csv")
+    seq_times = take_time("test_csv/slurm/seq_slurm.csv")
 
     omp_mpi(seq_times)
-    cuda(seq_times_colab)
+    cuda(seq_times)
