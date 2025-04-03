@@ -146,6 +146,8 @@ class MyTest(unittest.TestCase):
         subprocess.run(["make", "KMEANS_omp_mpi"])
         self.main_test(dimensions, "omp_mpi")
 
+        subprocess.run(["make", "clean"])
+
         print("Generating plots")
         print("-----------------------------------------")
         gen_plot()
