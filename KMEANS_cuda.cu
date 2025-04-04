@@ -452,10 +452,10 @@ int main(int argc, char* argv[])
  */
 
   // Set of the grid and block dimensions
-  dim3 blockSize(1024);
+  dim3 blockSize(512);
   dim3 numBlocks(ceil(static_cast<double>(lines) / blockSize.x));
 
-  dim3 blockSize_K(256)
+  dim3 blockSize_K(64);
   dim3 numBlocks2(ceil(static_cast<double>(K) / blockSize.x));
 
 	do {
