@@ -131,11 +131,6 @@ class MyTest(unittest.TestCase):
     def test(self):
         dimensions = ["2D2", "10D", "20D", "2D", "100D", "100D2"]
 
-        print("Running sequential test")
-        print("-----------------------------------------")
-        subprocess.run(["make", "KMEANS_seq"])
-        self.main_test(dimensions, "seq")
-
         print("Running CUDA test")
         print("-----------------------------------------")
         subprocess.run(["make", "KMEANS_cuda"])

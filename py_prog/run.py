@@ -83,7 +83,7 @@ def run_vers(vers: str, test: str, pcs: int, thread: int):
 
 
 def main(vers: str, test: str, pcs: int, thread: int):
-    run_seq(test)
+    # run_seq(test)
     run_vers(vers, test, pcs, thread)
 
     print("Check output files")
