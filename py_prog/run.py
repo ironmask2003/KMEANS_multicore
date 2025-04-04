@@ -29,12 +29,7 @@ def format_file(vers: str, pcs: int, thread: int, test: str) -> str:
     """
 
 
-def main(vers: str, test: str, pcs: int, thread: int):
-    # Set the job file
-    with open("jobs/job.slurm", "r+") as f:
-        f.truncate(0)
-        f.write(format_file(vers, pcs, thread, test))
-
+def wait_job(vers: str, test: str):
     # Array to store all times
     times = []
 
@@ -55,7 +50,34 @@ def main(vers: str, test: str, pcs: int, thread: int):
             time_temp = f.readlines()
         len_time_temp = len(time_temp)
         if len_time_temp > len_times:
-            break
+            return
+
+
+def run_seq(test: str):
+    print("Running sequential test")
+
+    # Set job file
+    with open("jobs/job.slurm", "r+") as f:
+        f.truncate(0)
+        f.write(format_file("seq", 0, 0, test))
+
+    wait_job("seq", test)
+
+
+def run_vers(vers: str, test: str, pcs: int, thread: int):
+    print(f"Running {'CUDA' if vers=='cuda' else 'OMP + MPI'} test")
+
+    # Set job file
+    with open("jobs/job.slurm", "r+") as f:
+        f.truncate(0)
+        f.write(format_file(vers, pcs, thread, test))
+
+    wait_job(vers, test)
+
+
+def main(vers: str, test: str, pcs: int, thread: int):
+    run_seq(test)
+    run_vers(vers, test, pcs, thread)
 
     print("Check output files")
     return check_file(
