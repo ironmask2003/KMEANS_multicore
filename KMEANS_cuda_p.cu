@@ -406,7 +406,7 @@ int main(int argc, char* argv[])
 
   // Creation of the variables used on the device
   float *d_data, *d_centroids, *d_maxDist, *d_distCentroids, *d_auxCentroids;
-  int *d_classMap, *d_pointsPerClass, *d_changes;
+  int *d_classMap, *d_pointsPerClass, *d_changes, *d_i;
 
   // Memory allocation on the device
     CHECK_CUDA_CALL( cudaMalloc(&d_data, lines*samples*sizeof(float)) );
@@ -417,6 +417,7 @@ int main(int argc, char* argv[])
     CHECK_CUDA_CALL( cudaMalloc(&d_maxDist, sizeof(float)) );
     CHECK_CUDA_CALL( cudaMalloc(&d_changes, sizeof(int)) );
     CHECK_CUDA_CALL( cudaMalloc(&d_distCentroids, K*sizeof(float)) );
+    CHECK_CUDA_CALL( cudaMalloc(&d_i, sizeof(int)) )
 
   // Copy data to the device
     CHECK_CUDA_CALL( cudaMemcpy(d_data, data, lines*samples*sizeof(float), cudaMemcpyHostToDevice) );
@@ -483,7 +484,8 @@ int main(int argc, char* argv[])
 
     maxDist=FLT_MIN;
     for(int i = 0; i < K; i++){
-      prova<<<numBlocks_prova, blockSize>>>(d_auxCentroids, d_pointsPerClass, &i);
+      CHECK_CUDA_CALL(cudaMemcpy(d_i, &i, sizeof(int), cudaMemcpyHostToDevice));
+      prova<<<numBlocks_prova, blockSize>>>(d_auxCentroids, d_pointsPerClass, d_i);
       CHECK_CUDA_LAST();
 
       CHECK_CUDA_CALL(cudaMemcpy(auxCentroids, d_auxCentroids, K*samples*sizeof(float), cudaMemcpyDeviceToHost));
