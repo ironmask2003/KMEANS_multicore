@@ -72,8 +72,6 @@ def run_seq(test: str):
 
 
 def run_vers(vers: str, test: str, pcs: int, thread: int):
-    print(f"Running {'CUDA' if vers=='cuda' else 'OMP + MPI'} test")
-
     # Set job file
     with open("jobs/job.slurm", "r+") as f:
         f.truncate(0)

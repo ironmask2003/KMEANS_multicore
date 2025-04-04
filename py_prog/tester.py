@@ -111,6 +111,8 @@ class MyTest(unittest.TestCase):
             print("-----------------------------------------")
             for _ in range(25):
                 self.doTest(vers, dim, 0, 0)
+                print("Test done successfully")
+                print("-----------------------------------------")
 
             times = []
 
