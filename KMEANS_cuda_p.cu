@@ -487,9 +487,11 @@ int main(int argc, char* argv[])
       CHECK_CUDA_CALL(cudaMemcpy(d_i, &i, sizeof(int), cudaMemcpyHostToDevice));
       prova<<<numBlocks_prova, blockSize>>>(d_auxCentroids, d_pointsPerClass, d_i);
       CHECK_CUDA_LAST();
+    }
 
       CHECK_CUDA_CALL(cudaMemcpy(auxCentroids, d_auxCentroids, K*samples*sizeof(float), cudaMemcpyDeviceToHost));
 
+    for(int i = 0; i < K; i++){
       distCentroids[i]=euclideanDistance(&centroids[i*samples], &auxCentroids[i*samples], samples);
 			if(distCentroids[i]>maxDist) {
 				maxDist=distCentroids[i];
