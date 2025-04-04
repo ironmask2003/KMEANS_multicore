@@ -268,7 +268,7 @@ __global__ void prova(float* d_auxCentroids, int* d_pointsPerClass, int* id_K){
   int id_K_val = *id_K;
 
   if (id < d_samples) {
-    d_auxCentroids[id_K_val * d_samples + id] /= d_pointsPerClass[id_K];
+    d_auxCentroids[id_K_val * d_samples + id] /= d_pointsPerClass[id_K_val];
   }
 }
 
@@ -286,7 +286,7 @@ __global__ void max_step(float* d_auxCentroids, int* d_pointsPerClass, float* d_
         int blocksPerGrid = (d_samples + threadsPerBlock - 1) / threadsPerBlock;
 
         // Launch child kernel
-        prova<<<blocksPerGrid, threadsPerBlock>>>(d_auxCentroids, d_pointsPerClass, id_K);
+        prova<<<blocksPerGrid, threadsPerBlock>>>(d_auxCentroids, d_pointsPerClass, &id);
 
         // Calculate the distance between the older centroid and the new one
         d_distCentroids[id]=d_euclideanDistance(&d_centroids[id*d_samples], &d_auxCentroids[id*d_samples], d_samples);
