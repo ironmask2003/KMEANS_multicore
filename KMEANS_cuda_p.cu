@@ -265,7 +265,7 @@ __global__ void prova(float* d_auxCentroids, int* d_pointsPerClass, int* i){
     
     // ID of the thread 
     int id = (blockIdx.x * blockDim.x) + threadIdx.x;
-    int val = *id
+    int val = *i
 
     if (id < d_samples) {
       d_auxCentroids[val * d_samples + id] /= d_pointsPerClass[val];
