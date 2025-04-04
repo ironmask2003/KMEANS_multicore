@@ -196,6 +196,18 @@ __device__ float d_euclideanDistance(float *point, float *center, int samples)
   return(dist);
 }
 
+float euclideanDistance(float *point, float *center, int samples)
+{
+	float dist=0.0;
+	for(int i=0; i<samples; i++) 
+	{
+		dist = fmaf((point[i]-center[i]), (point[i]-center[i]), dist);
+	}
+  dist = sqrt(dist);
+  return(dist);
+}
+
+
 /*
 Function zeroFloatMatriz: Set matrix elements to 0
 This function could be modified
@@ -265,7 +277,7 @@ __global__ void prova(float* d_auxCentroids, int* d_pointsPerClass, int* i){
     
     // ID of the thread 
     int id = (blockIdx.x * blockDim.x) + threadIdx.x;
-    int val = *i
+    int val = *i;
 
     if (id < d_samples) {
       d_auxCentroids[val * d_samples + id] /= d_pointsPerClass[val];
