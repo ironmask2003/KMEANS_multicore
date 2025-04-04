@@ -261,7 +261,7 @@ __global__ void assign_centroids(float* d_data, float* d_centroids, int* d_class
     }
 }
 
-__global__ void prova(float* d_auxCentroids, int* d_pointsPerClass, int* i)
+__global__ void prova(float* d_auxCentroids, int* d_pointsPerClass, int* i){
     
     // ID of the thread 
     int id = (blockIdx.x * blockDim.x) + threadIdx.x;
@@ -270,6 +270,7 @@ __global__ void prova(float* d_auxCentroids, int* d_pointsPerClass, int* i)
     if (id < d_samples) {
       d_auxCentroids[val * d_samples + id] /= d_pointsPerClass[val];
     }
+}
 
 // Function used to write the computation time to a file
 void writeCompTimeToFile(char *filename, float value) {
