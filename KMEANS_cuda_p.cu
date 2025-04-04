@@ -261,7 +261,7 @@ __global__ void assign_centroids(float* d_data, float* d_centroids, int* d_class
     }
 }
 
-__global__ prova(float* d_auxCentroids, int* d_pointsPerClass, int* id_K):
+__global__ void prova(float* d_auxCentroids, int* d_pointsPerClass, int* id_K):
 
   // ID of the thread
   int id = (blockIdx.x * blockDim.x) + threadIdx.x;
