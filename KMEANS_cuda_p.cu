@@ -261,7 +261,7 @@ __global__ void assign_centroids(float* d_data, float* d_centroids, int* d_class
     }
 }
 
-__global__ void prova(float* d_auxCentroids, int* d_pointsPerClass, int* id_K):
+__global__ void prova(float* d_auxCentroids, int* d_pointsPerClass, int* id_K){
 
   // ID of the thread
   int id = (blockIdx.x * blockDim.x) + threadIdx.x;
@@ -270,6 +270,7 @@ __global__ void prova(float* d_auxCentroids, int* d_pointsPerClass, int* id_K):
   if (id < d_samples) {
     d_auxCentroids[id_K_val * d_samples + id] /= d_pointsPerClass[id_K];
   }
+}
 
 // Kernel functino used to calculate the maximum distance between the older centroids and the new ones
 __global__ void max_step(float* d_auxCentroids, int* d_pointsPerClass, float* d_centroids, float* d_maxDist, float* d_distCentroids){
