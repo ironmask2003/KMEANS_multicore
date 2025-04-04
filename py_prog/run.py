@@ -1,4 +1,6 @@
 import subprocess
+import re
+import time
 
 
 # Function used to check if two file are equal
@@ -29,28 +31,33 @@ def format_file(vers: str, pcs: int, thread: int, test: str) -> str:
     """
 
 
-def wait_job(vers: str, test: str):
-    # Array to store all times
-    times = []
+# Function to check if job is still running
+def is_job_running(job_id):
+    result = subprocess.run(["squeue", "-j", job_id], capture_output=True, text=True)
+    return job_id in result.stdout  # If job_id is in output, job is still running
 
-    # Open comp_time file and read all lines
-    with open(f"./comp_time/{vers}/comp_time{test}.csv", "r") as f:
-        times = f.readlines()
 
-    len_times = len(times)
-
+def wait_job():
     # Run job with sbatch command
-    subprocess.run(["sbatch", "jobs/job.slurm"])
+    sbatch_output = subprocess.run(
+        ["sbatch", "jobs/job.slurm"], capture_output=True, text=True
+    )
 
-    print("Waiting for job to finish...")
-    while True:
-        time_temp = []
-        # Open comp_time file and read all lines
-        with open(f"./comp_time/{vers}/comp_time{test}.csv", "r") as f:
-            time_temp = f.readlines()
-        len_time_temp = len(time_temp)
-        if len_time_temp > len_times:
-            return
+    # Extract the job ID from the sbatch output
+    match = re.search(r"Submitted batch job (\d+)", sbatch_output.stdout)
+    if not match:
+        print("Error: Could not extract Job ID from sbatch output.")
+        exit(1)
+
+    job_id = match.group(1)
+    print(f"Submitted job {job_id}, waiting for completion...")
+
+    # Wait for the job to complete
+    while is_job_running(job_id):
+        print(f"Job {job_id} is still running...")
+        time.sleep(5)  # Check every 30 seconds
+
+    print(f"Job {job_id} has completed!")
 
 
 def run_seq(test: str):
@@ -61,7 +68,7 @@ def run_seq(test: str):
         f.truncate(0)
         f.write(format_file("seq", 0, 0, test))
 
-    wait_job("seq", test)
+    wait_job()
 
 
 def run_vers(vers: str, test: str, pcs: int, thread: int):
@@ -72,7 +79,7 @@ def run_vers(vers: str, test: str, pcs: int, thread: int):
         f.truncate(0)
         f.write(format_file(vers, pcs, thread, test))
 
-    wait_job(vers, test)
+    wait_job()
 
 
 def main(vers: str, test: str, pcs: int, thread: int):
