@@ -24,6 +24,9 @@ def format_file(vers: str, pcs: int, thread: int, test: str) -> str:
 {'#SBATCH --mem=4G                      # Memory per node (adjust as needed)' if vers=='cuda' else ''}
 
 {
+    f'export OMP_NUM_THREADS={thread}' if vers == 'omp_mpi' else ''
+}
+{
     f'./KMEANS_cuda test_files/input{test}.inp 40 100 1 0.0001 output_files/cuda/output{test}.txt comp_time/cuda/comp_time{test}.csv' if vers=='cuda' else 
     f'mpirun -n {pcs} ./KMEANS_omp_mpi test_files/input{test}.inp 40 100 1 0.0001 output_files/omp_mpi/output{test}.txt comp_time/omp_mpi/comp_time{test}.csv {thread}' if vers == 'omp_mpi' else
     f'./KMEANS_seq test_files/input{test}.inp 40 100 1 0.0001 output_files/seq/output{test}.txt comp_time/seq/comp_time{test}.csv'
