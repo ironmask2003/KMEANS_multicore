@@ -15,14 +15,14 @@ def addAvgTime(test_type, avgTimes):
         open(f"./test_csv/slurm/{test_type}_slurm.csv", "w").close()
         subprocess.run(
             [
-                f"echo AvgTime2D2, AvgTime10D, AvgTime20D, AvgTime2D, AvgTime100D, AvgTime100D2 >> ./test_csv/slurm/{test_type}_slurm.csv"
+                f"echo AvgTime2D2, AvgTime10D, AvgTime20D, AvgTime2D, AvgTime100D, AvgTime100D2, AvgTime100D_200K, AvgTime100D_400K, AvgTime100D_800K, AvgTime100D_1000K >> ./test_csv/slurm/{test_type}_slurm.csv"
             ],
             shell=True,
         )
 
     subprocess.run(
         [
-            f"echo {avgTimes[0]}, {avgTimes[1]}, {avgTimes[2]}, {avgTimes[3]}, {avgTimes[4]}, {avgTimes[5]} >> ./test_csv/slurm/{test_type}_slurm.csv"
+            f"echo {avgTimes[0]}, {avgTimes[1]}, {avgTimes[2]}, {avgTimes[3]}, {avgTimes[4]}, {avgTimes[5]}, {avgTimes[6]}, {avgTimes[7]}, {avgTimes[8]}, {avgTimes[9]} >> ./test_csv/slurm/{test_type}_slurm.csv"
         ],
         shell=True,
     )
@@ -131,7 +131,18 @@ class MyTest(unittest.TestCase):
         print("-----------------------------------------")
 
     def test(self):
-        dimensions = ["2D2", "10D", "20D", "2D", "100D", "100D2"]
+        dimensions = [
+            "2D2",
+            "10D",
+            "20D",
+            "2D",
+            "100D",
+            "100D2",
+            "100D_200K",
+            "100D_400K",
+            "100D_800K",
+            "100D_1000K",
+        ]
 
         print("Running CUDA test")
         print("-----------------------------------------")
