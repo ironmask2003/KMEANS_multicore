@@ -289,7 +289,7 @@ void calculateOccupancy(){
   cudaGetDeviceProperties(&prop, 0); // Ottieni le proprietà della GPU
 
   int totalSM = prop.multiProcessorCount;  // Numero totale di SM
-  printf("\n\tNumero totale di SM: %d\n", totalSM);
+  printf("\n\n\tNumero totale di SM: %d\n", totalSM);
 
   int threadsPerBlock = 256;  // Imposta il numero di thread per blocco
   int maxBlocksPerSM;
