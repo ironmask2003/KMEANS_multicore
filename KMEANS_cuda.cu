@@ -283,6 +283,29 @@ __global__ void max_step(float* d_auxCentroids, int* d_pointsPerClass, float* d_
     }
 }
 
+// Function used to calculate occupancy of the GPU 
+void calculateOccupancy(){
+  cudaDeviceProp prop;
+  cudaGetDeviceProperties(&prop, 0); // Ottieni le proprietà della GPU
+
+  int totalSM = prop.multiProcessorCount;  // Numero totale di SM
+  printf("Numero totale di SM: %d\n", totalSM);
+
+  int threadsPerBlock = 256;  // Imposta il numero di thread per blocco
+  int maxBlocksPerSM;
+
+  // Calcola il numero massimo di blocchi per SM
+  cudaOccupancyMaxActiveBlocksPerMultiprocessor(&maxBlocksPerSM, my_kernel, threadsPerBlock, 0);
+
+  // Calcola l'occupancy
+  int totalThreadsPerSM = maxBlocksPerSM * threadsPerBlock;
+  printf("Numero massimo di thread per SM: %d\n", totalThreadsPerSM);
+  
+  // Calcola l'occupancy in percentuale
+  float occupancy = (float)totalThreadsPerSM / (prop.maxThreadsPerMultiProcessor);
+  printf("Occupancy: %.2f%%\n", occupancy * 100);
+}
+
 // Function used to write the computation time to a file
 void writeCompTimeToFile(char *filename, float value) {
   // Write value in the last line of the file
@@ -395,6 +418,13 @@ int main(int argc, char* argv[])
 	printf("\tMinimum number of changes: %d [%g%% of %d points]\n", minChanges, atof(argv[4]), lines);
 	printf("\tMaximum centroid precision: %f\n", maxThreshold);
 
+  cudaDeviceProp prop;
+  cudaGetDeviceProperties(&prop, 0);
+  printf("\n\tGPU Info:\n");
+  printf("\tMax thread per block: %d\n", prop.maxThreadsPerBlock);
+  printf("\tMax thread per multiprocessor: %d\n", prop.maxThreadsPerMultiProcessor);
+  printf("\tWarp size: %d\n", prop.warpSize);
+
   //**************************************************
   // CUDA memory allocation***************************
   
@@ -452,10 +482,10 @@ int main(int argc, char* argv[])
  */
 
   // Set of the grid and block dimensions
-  dim3 blockSize(512);
+  dim3 blockSize(256);
   dim3 numBlocks(ceil(static_cast<double>(lines) / blockSize.x));
 
-  dim3 blockSize_K(64);
+  dim3 blockSize_K(32);
   dim3 numBlocks2(ceil(static_cast<double>(K) / blockSize.x));
 
 	do {
