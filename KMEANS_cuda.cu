@@ -295,7 +295,7 @@ void calculateOccupancy(){
   int maxBlocksPerSM;
 
   // Calcola il numero massimo di blocchi per SM
-  cudaOccupancyMaxActiveBlocksPerMultiprocessor(&maxBlocksPerSM, my_kernel, threadsPerBlock, 0);
+  cudaOccupancyMaxActiveBlocksPerMultiprocessor(&maxBlocksPerSM, assign_centroids, threadsPerBlock, 0);
 
   // Calcola l'occupancy
   int totalThreadsPerSM = maxBlocksPerSM * threadsPerBlock;
