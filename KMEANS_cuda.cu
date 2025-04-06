@@ -289,7 +289,7 @@ void calculateOccupancy(){
   cudaGetDeviceProperties(&prop, 0); // Ottieni le proprietà della GPU
 
   int totalSM = prop.multiProcessorCount;  // Numero totale di SM
-  printf("Numero totale di SM: %d\n", totalSM);
+  printf("\n\tNumero totale di SM: %d\n", totalSM);
 
   int threadsPerBlock = 256;  // Imposta il numero di thread per blocco
   int maxBlocksPerSM;
@@ -299,11 +299,24 @@ void calculateOccupancy(){
 
   // Calcola l'occupancy
   int totalThreadsPerSM = maxBlocksPerSM * threadsPerBlock;
-  printf("Numero massimo di thread per SM: %d\n", totalThreadsPerSM);
+  printf("\tNumero massimo di thread per SM: %d\n", totalThreadsPerSM);
   
   // Calcola l'occupancy in percentuale
   float occupancy = (float)totalThreadsPerSM / (prop.maxThreadsPerMultiProcessor);
-  printf("Occupancy: %.2f%%\n", occupancy * 100);
+  printf("\tOccupancy First Kernel: %.2f%%\n", occupancy * 100);
+
+  threadsPerBlock = 32;
+
+   // Calcola il numero massimo di blocchi per SM
+  cudaOccupancyMaxActiveBlocksPerMultiprocessor(&maxBlocksPerSM, assign_centroids, threadsPerBlock, 0);
+
+  // Calcola l'occupancy
+  int totalThreadsPerSM = maxBlocksPerSM * threadsPerBlock;
+  printf("\tNumero massimo di thread per SM: %d\n", totalThreadsPerSM);
+  
+  // Calcola l'occupancy in percentuale
+  float occupancy = (float)totalThreadsPerSM / (prop.maxThreadsPerMultiProcessor);
+  printf("\tOccupancy Second Kernel: %.2f%%\n", occupancy * 100);
 }
 
 // Function used to write the computation time to a file
