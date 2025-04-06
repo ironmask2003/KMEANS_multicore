@@ -283,42 +283,6 @@ __global__ void max_step(float* d_auxCentroids, int* d_pointsPerClass, float* d_
     }
 }
 
-// Function used to calculate occupancy of the GPU 
-void calculateOccupancy(){
-  cudaDeviceProp prop;
-  cudaGetDeviceProperties(&prop, 0); // Ottieni le proprietà della GPU
-
-  int totalSM = prop.multiProcessorCount;  // Numero totale di SM
-  printf("\n\n\tNumero totale di SM: %d\n", totalSM);
-
-  int threadsPerBlock = 256;  // Imposta il numero di thread per blocco
-  int maxBlocksPerSM;
-
-  // Calcola il numero massimo di blocchi per SM
-  cudaOccupancyMaxActiveBlocksPerMultiprocessor(&maxBlocksPerSM, assign_centroids, threadsPerBlock, 0);
-
-  // Calcola l'occupancy
-  int totalThreadsPerSM = maxBlocksPerSM * threadsPerBlock;
-  printf("\tNumero massimo di thread per SM: %d\n", totalThreadsPerSM);
-  
-  // Calcola l'occupancy in percentuale
-  float occupancy = (float)totalThreadsPerSM / (prop.maxThreadsPerMultiProcessor);
-  printf("\tOccupancy First Kernel: %.2f%%\n", occupancy * 100);
-
-  threadsPerBlock = 32;
-
-   // Calcola il numero massimo di blocchi per SM
-  cudaOccupancyMaxActiveBlocksPerMultiprocessor(&maxBlocksPerSM, assign_centroids, threadsPerBlock, 0);
-
-  // Calcola l'occupancy
-  totalThreadsPerSM = maxBlocksPerSM * threadsPerBlock;
-  printf("\tNumero massimo di thread per SM: %d\n", totalThreadsPerSM);
-  
-  // Calcola l'occupancy in percentuale
-  occupancy = (float)totalThreadsPerSM / (prop.maxThreadsPerMultiProcessor);
-  printf("\tOccupancy Second Kernel: %.2f%%\n", occupancy * 100);
-}
-
 // Function used to write the computation time to a file
 void writeCompTimeToFile(char *filename, float value) {
   // Write value in the last line of the file
@@ -580,9 +544,6 @@ int main(int argc, char* argv[])
 		showFileError(error, argv[6]);
 		exit(error);
 	}
-
-  // Print occupancy
-  calculateOccupancy();
 
 	//Free memory
 	free(data);
