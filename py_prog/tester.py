@@ -148,19 +148,19 @@ class MyTest(unittest.TestCase):
         skip_cuda = input("Do you want to skip the test with CUDA code? (y/n): ")
         skip_omp_mpi = input("Do you want to skip the test with OMP_MPI code? (y/n): ")
 
-        if skip_seq == "n":
+        if skip_seq == "y":
             print("Running sequential test")
             print("-----------------------------------------")
             subprocess.run(["make", "KMEANS_seq"])
             self.main_test(dimensions, "seq")
 
-        if skip_cuda == "n":
+        if skip_cuda == "y":
             print("Running CUDA test")
             print("-----------------------------------------")
             subprocess.run(["make", "KMEANS_cuda"])
             self.main_test(dimensions, "cuda")
 
-        if skip_omp_mpi == "n":
+        if skip_omp_mpi == "y":
             print("Running OMP test")
             print("-----------------------------------------")
             subprocess.run(["make", "KMEANS_omp"])
