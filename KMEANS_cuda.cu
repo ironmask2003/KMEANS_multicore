@@ -568,6 +568,9 @@ int main(int argc, char* argv[])
 		exit(error);
 	}
 
+  // Print occupancy
+  calculateOccupancy();
+
 	//Free memory
 	free(data);
 	free(classMap);
