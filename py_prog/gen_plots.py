@@ -19,7 +19,7 @@ def take_time(filename):
 
 # Function used to take all times from omp_mpi file .csv with process defined in input of the function
 def take_time_omp_mpi(num_process):
-    times = {1: [], 2: [], 4: [], 8: [], 16: [], 32: []}
+    times = {1: [], 2: []}
     # Open csv file
     with open(f"test_csv/slurm/omp_mpi_{num_process}_slurm.csv", "r") as csvfile:
         csvreader = csv.reader(csvfile)
@@ -42,26 +42,39 @@ def calculate_eff(num_process, num_thread, seq_time, omp_mpi_time):
 
 
 def omp_mpi(seq_times):
-    process = [2, 4, 8]
-    times_omp_mpi = {2: {}, 4: {}, 8: {}}
+    process = [1, 2, 4]
+    tests = [
+        "2D2",
+        "10D",
+        "20D",
+        "2D",
+        "100D",
+        "100D2",
+        "100D_200K",
+        "100D_400K",
+        "100D_800K",
+        "100D_1000K",
+    ]
+
+    times_omp_mpi = {1: {}, 2: {}, 4: {}}
     for pcs in process:
         times_omp_mpi[pcs] = take_time_omp_mpi(pcs)
 
     effs = {
-        2: {1: [], 2: [], 4: [], 8: [], 16: [], 32: []},
-        4: {1: [], 2: [], 4: [], 8: [], 16: [], 32: []},
-        8: {1: [], 2: [], 4: [], 8: [], 16: [], 32: []},
+        1: {1: [], 2: []},
+        2: {1: [], 2: []},
+        4: {1: [], 2: []},
     }
 
     speedup = {
-        2: {1: [], 2: [], 4: [], 8: [], 16: [], 32: []},
-        4: {1: [], 2: [], 4: [], 8: [], 16: [], 32: []},
-        8: {1: [], 2: [], 4: [], 8: [], 16: [], 32: []},
+        1: {1: [], 2: []},
+        2: {1: [], 2: []},
+        4: {1: [], 2: []},
     }
 
     for pcs in effs.keys():
         for thread in times_omp_mpi[pcs].keys():
-            for test in range(6):
+            for test in range(len(tests)):
                 effs[pcs][thread].append(
                     calculate_eff(
                         pcs, thread, seq_times[test], times_omp_mpi[pcs][thread][test]
@@ -73,15 +86,7 @@ def omp_mpi(seq_times):
                     )
                 )
 
-    threads = [1, 2, 4, 8, 16, 32]
-    tests = [
-        "2D2input.inp",
-        "10Dinput.inp",
-        "20Dinput.inp",
-        "2Dinput.inp",
-        "100Dinput.inp",
-        "100D2input.inp",
-    ]
+    threads = [1, 2]
 
     for pcs in process:
         datas = {
@@ -91,6 +96,10 @@ def omp_mpi(seq_times):
             "2Dinput.inp": [],
             "100Dinput.inp": [],
             "100D2input.inp": [],
+            "100D_200Kinput.inp": [],
+            "100D_400Kinput.inp": [],
+            "100D_800Kinput.inp": [],
+            "100D_1000Kinput.inp": [],
         }
 
         for test in range(len(tests)):
@@ -99,8 +108,8 @@ def omp_mpi(seq_times):
                 data.append(speedup[pcs][thread][test])
             datas[tests[test]] = data
 
-        markers = ["o", "s", "^", "x", "p", "D"]
-        colors = ["blue", "orange", "green", "red", "purple", "brown"]
+        markers = ["o", "s", "D", "^", "v", ">", "<", "p", "*"]
+        colors = ["b", "g", "r", "c", "m", "y", "k", "#FF5733", "#33FF57"]
 
         cont = 0
         plt.figure(figsize=(10, 6))
@@ -140,6 +149,10 @@ def omp_mpi(seq_times):
             "2Dinput.inp": [],
             "100Dinput.inp": [],
             "100D2input.inp": [],
+            "100D_200Kinput.inp": [],
+            "100D_400Kinput.inp": [],
+            "100D_800Kinput.inp": [],
+            "100D_1000Kinput.inp": [],
         }
 
         for test in range(len(tests)):
@@ -148,8 +161,8 @@ def omp_mpi(seq_times):
                 data.append(effs[pcs][thread][test])
             datas[tests[test]] = data
 
-        markers = ["o", "s", "^", "x", "p", "D"]
-        colors = ["blue", "orange", "green", "red", "purple", "brown"]
+        markers = ["o", "s", "D", "^", "v", ">", "<", "p", "*"]
+        colors = ["b", "g", "r", "c", "m", "y", "k", "#FF5733", "#33FF57"]
 
         cont = 0
         plt.figure(figsize=(10, 6))
@@ -192,6 +205,10 @@ def cuda(seq_times):
         "2Dinput.inp",
         "100Dinput.inp",
         "100D2input.inp",
+        "100D_200Kinput.inp",
+        "100D_400Kinput.inp",
+        "100D_800Kinput.inp",
+        "100D_1000Kinput.inp",
     ]
 
     speedup = []

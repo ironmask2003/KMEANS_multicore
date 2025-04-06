@@ -50,8 +50,10 @@ class MyTest(unittest.TestCase):
                 # Move comp_time in the correct file
                 with open(f"./comp_time{dimension}.csv", "r") as f:
                     comp_time = f.readline().strip()
-                
-                with open(f"./comp_time/{test_type}/comp_time{dimension}.csv", "a") as f:
+
+                with open(
+                    f"./comp_time/{test_type}/comp_time{dimension}.csv", "a"
+                ) as f:
                     f.write(comp_time + "\n")
 
         # Array to store all times
@@ -100,7 +102,7 @@ class MyTest(unittest.TestCase):
         # Else test with OMP+MPI
         dimensions = ["2D2", "10D", "20D", "2D", "100D", "100D2"]
         num_process = [16]
-        num_threads = [1 ,2, 4, 8, 16, 32]
+        num_threads = [1, 2, 4, 8, 16, 32]
 
         for proc, thread, dimension in [
             (p, t, d) for p in num_process for t in num_threads for d in dimensions
@@ -108,6 +110,7 @@ class MyTest(unittest.TestCase):
             print("-------------------------------")
             print(f"Test with {test_type}, {proc}, {thread} and {dimension}")
             self.running_test(test_type, dimension, proc, thread)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -36,14 +36,14 @@ def addAvgTime_omp_mpi(test_type, avgTimes, pcs, thread):
         open(f"./test_csv/slurm/{test_type}_{pcs}_slurm.csv", "w").close()
         subprocess.run(
             [
-                f"echo Number of Process, Number of Thread, AvgTime2D2, AvgTime10D, AvgTime20D, AvgTime2D, AvgTime100D, AvgTime100D2 >> ./test_csv/slurm/{test_type}_{pcs}_slurm.csv"
+                f"echo Number of Process, Number of Thread, AvgTime2D2, AvgTime10D, AvgTime20D, AvgTime2D, AvgTime100D, AvgTime100D2, AvgTime100D_200K, AvgTime100D_400K, AvgTime100D_800K, AvgTime100D_1000K >> ./test_csv/slurm/{test_type}_{pcs}_slurm.csv"
             ],
             shell=True,
         )
 
     subprocess.run(
         [
-            f"echo {pcs} {thread} {avgTimes[0]}, {avgTimes[1]}, {avgTimes[2]}, {avgTimes[3]}, {avgTimes[4]}, {avgTimes[5]} >> ./test_csv/slurm/{test_type}_{pcs}_slurm.csv"
+            f"echo {pcs}, {thread}, {avgTimes[0]}, {avgTimes[1]}, {avgTimes[2]}, {avgTimes[3]}, {avgTimes[4]}, {avgTimes[5]}, {avgTimes[6]}, {avgTimes[7]}, {avgTimes[8]}, {avgTimes[9]} >> ./test_csv/slurm/{test_type}_{pcs}_slurm.csv"
         ],
         shell=True,
     )
@@ -54,8 +54,8 @@ class MyTest(unittest.TestCase):
         self.assertEqual(main(vers, test, pcs, thread), True)
 
     def run_omp_mpi(self, dimensions: list[str], vers: str):
-        processes = [2, 4, 8]
-        threads = [1, 2, 4, 8, 16, 32]
+        processes = [1, 2, 4]
+        threads = [1, 2]
 
         for pcs, thread in [(p, t) for p in processes for t in threads]:
             print(f"Test with {pcs} process and {thread} thread")
@@ -144,15 +144,27 @@ class MyTest(unittest.TestCase):
             "100D_1000K",
         ]
 
-        print("Running CUDA test")
-        print("-----------------------------------------")
-        subprocess.run(["make", "KMEANS_cuda"])
-        self.main_test(dimensions, "cuda")
+        skip_seq = input("Do you want to skip the test with sequential code? (y/n): ")
+        skip_cuda = input("Do you want to skip the test with CUDA code? (y/n): ")
+        skip_omp_mpi = input("Do you want to skip the test with OMP_MPI code? (y/n): ")
 
-        print("Running OMP_MPI test")
-        print("-----------------------------------------")
-        subprocess.run(["make", "KMEANS_omp_mpi"])
-        self.main_test(dimensions, "omp_mpi")
+        if skip_seq == "n":
+            print("Running sequential test")
+            print("-----------------------------------------")
+            subprocess.run(["make", "KMEANS_seq"])
+            self.main_test(dimensions, "seq")
+
+        if skip_cuda == "n":
+            print("Running CUDA test")
+            print("-----------------------------------------")
+            subprocess.run(["make", "KMEANS_cuda"])
+            self.main_test(dimensions, "cuda")
+
+        if skip_omp_mpi == "n":
+            print("Running OMP test")
+            print("-----------------------------------------")
+            subprocess.run(["make", "KMEANS_omp"])
+            self.main_test(dimensions, "omp")
 
         subprocess.run(["make", "clean"])
 
