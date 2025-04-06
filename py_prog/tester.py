@@ -164,7 +164,7 @@ class MyTest(unittest.TestCase):
             print("Running OMP test")
             print("-----------------------------------------")
             subprocess.run(["make", "KMEANS_omp"])
-            self.main_test(dimensions, "omp")
+            self.main_test(dimensions, "omp_mpi")
 
         subprocess.run(["make", "clean"])
 
