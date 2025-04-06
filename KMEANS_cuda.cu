@@ -311,11 +311,11 @@ void calculateOccupancy(){
   cudaOccupancyMaxActiveBlocksPerMultiprocessor(&maxBlocksPerSM, assign_centroids, threadsPerBlock, 0);
 
   // Calcola l'occupancy
-  int totalThreadsPerSM = maxBlocksPerSM * threadsPerBlock;
+  totalThreadsPerSM = maxBlocksPerSM * threadsPerBlock;
   printf("\tNumero massimo di thread per SM: %d\n", totalThreadsPerSM);
   
   // Calcola l'occupancy in percentuale
-  float occupancy = (float)totalThreadsPerSM / (prop.maxThreadsPerMultiProcessor);
+  occupancy = (float)totalThreadsPerSM / (prop.maxThreadsPerMultiProcessor);
   printf("\tOccupancy Second Kernel: %.2f%%\n", occupancy * 100);
 }
 
