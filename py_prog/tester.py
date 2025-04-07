@@ -54,10 +54,12 @@ class MyTest(unittest.TestCase):
         self.assertEqual(main(vers, test, pcs, thread), True)
 
     def run_omp_mpi(self, dimensions: list[str], vers: str):
-        processes = [1, 2, 4]
-        threads = [1, 2]
+        processes = [2, 4, 8]
+        threads = [1, 2, 4, 8]
 
         for pcs, thread in [(p, t) for p in processes for t in threads]:
+            if pcs == 8 and thread > 4:
+                continue
             print(f"Test with {pcs} process and {thread} thread")
             print("-----------------------------------------")
             avgTimes = []
@@ -163,7 +165,7 @@ class MyTest(unittest.TestCase):
         if skip_omp_mpi == "y":
             print("Running OMP test")
             print("-----------------------------------------")
-            subprocess.run(["make", "KMEANS_omp"])
+            subprocess.run(["make", "KMEANS_omp_mpi"])
             self.main_test(dimensions, "omp_mpi")
 
         subprocess.run(["make", "clean"])

@@ -34,6 +34,23 @@ def format_file(vers: str, pcs: int, thread: int, test: str) -> str:
     """
 
 
+def format_omp_mpi(pcs: int, threads: int, test: str) -> str:
+    return f"""#!/bin/bash
+#SBATCH --job-name=kmeans_omp_mpi             # Job name
+#SBATCH --output=jobs/logs_omp_mpi/out.%N     # Standard output log (%N = node name)
+#SBATCH --error=jobs/logs_omp_mpi/err.%N      # Standard error log
+#SBATCH --time=01:00:00                       # Max runtime (adjust as needed)
+#SBATCH --ntasks={pcs}
+#SBATCH --cpus-per-task={threads}
+
+# Run the job using MPI
+export OMP_NUM_THREADS={threads}
+export OMPI_MCA_btl_tcp_if_include=ibp129s0
+
+srun --mpi=pmix ./KMEANS_omp_mpi test_files/input{test}.inp 40 100 1 0.0001 output_files/omp_mpi/output{test}.txt comp_time/omp_mpi/comp_time{test}.csv ${threads}
+    """
+
+
 # Function to check if job is still running
 def is_job_running(job_id):
     result = subprocess.run(["squeue", "-j", job_id], capture_output=True, text=True)
@@ -78,7 +95,10 @@ def run_vers(vers: str, test: str, pcs: int, thread: int):
     # Set job file
     with open("jobs/job.slurm", "r+") as f:
         f.truncate(0)
-        f.write(format_file(vers, pcs, thread, test))
+        if vers == "omp_mpi":
+            f.write(format_omp_mpi(pcs, thread, test))
+        else:
+            f.write(format_file(vers, pcs, thread, test))
 
     wait_job()
 

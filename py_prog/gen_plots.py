@@ -19,7 +19,7 @@ def take_time(filename):
 
 # Function used to take all times from omp_mpi file .csv with process defined in input of the function
 def take_time_omp_mpi(num_process):
-    times = {1: [], 2: []}
+    times = {1: [], 2: [], 4: [], 8: []}
     # Open csv file
     with open(f"test_csv/slurm/omp_mpi_{num_process}_slurm.csv", "r") as csvfile:
         csvreader = csv.reader(csvfile)
@@ -42,7 +42,7 @@ def calculate_eff(num_process, num_thread, seq_time, omp_mpi_time):
 
 
 def omp_mpi(seq_times):
-    process = [1, 2, 4]
+    process = [2, 4, 8]
     tests = [
         "2D2",
         "10D",
@@ -56,20 +56,20 @@ def omp_mpi(seq_times):
         "100D_1000K",
     ]
 
-    times_omp_mpi = {1: {}, 2: {}, 4: {}}
+    times_omp_mpi = {2: {}, 4: {}, 8: {}}
     for pcs in process:
         times_omp_mpi[pcs] = take_time_omp_mpi(pcs)
 
     effs = {
-        1: {1: [], 2: []},
-        2: {1: [], 2: []},
-        4: {1: [], 2: []},
+        2: {1: [], 2: [], 4: [], 8: []},
+        4: {1: [], 2: [], 4: [], 8: []},
+        8: {1: [], 2: [], 4: []},
     }
 
     speedup = {
-        1: {1: [], 2: []},
-        2: {1: [], 2: []},
-        4: {1: [], 2: []},
+        2: {1: [], 2: [], 4: [], 8: []},
+        4: {1: [], 2: [], 4: [], 8: []},
+        8: {1: [], 2: [], 4: []},
     }
 
     for pcs in effs.keys():
@@ -86,7 +86,7 @@ def omp_mpi(seq_times):
                     )
                 )
 
-    threads = [1, 2]
+    threads = [1, 2, 4, 8]
 
     for pcs in process:
         datas = {
@@ -201,14 +201,30 @@ def cuda(seq_times):
     tests = [
         "2D2input.inp",
         "10Dinput.inp",
-        "20Dinput.inp",
         "2Dinput.inp",
+        "20Dinput.inp",
         "100Dinput.inp",
         "100D2input.inp",
-        "100D_200Kinput.inp",
-        "100D_400Kinput.inp",
-        "100D_800Kinput.inp",
-        "100D_1000Kinput.inp",
+        "200Kinput.inp",
+        "400Kinput.inp",
+        "800Kinput.inp",
+        "1000Kinput.inp",
+    ]
+
+    small_test = [
+        "2D2input.inp",
+        "10Dinput.inp",
+        "2Dinput.inp",
+        "20Dinput.inp",
+        "100Dinput.inp",
+    ]
+
+    big_test = [
+        "100D2input.inp",
+        "200Kinput.inp",
+        "400Kinput.inp",
+        "800Kinput.inp",
+        "1000Kinput.inp",
     ]
 
     speedup = []
@@ -216,12 +232,12 @@ def cuda(seq_times):
     for test in range(len(tests)):
         speedup.append(calculate_eff(1, 1, seq_times[test], cuda_times[test]))
 
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(15, 6))
     plt.scatter(tests, speedup, marker="D", s=80, color="b")
 
     # Personalizza il grafico
     plt.xlabel("Test")
-    plt.ylabel("Tempo (secondi)")
+    plt.ylabel("Speedup")
     plt.title("Tempi di esecuzione dei test")
     plt.grid(True, linestyle="--", alpha=0.6)
 
@@ -232,10 +248,50 @@ def cuda(seq_times):
     )
     plt.clf()
 
+    plt.figure(figsize=(10, 6))
+
+    plt.plot(small_test, seq_times[:5], label="Test Sequential", marker="s", color="r")
+    plt.plot(small_test, cuda_times[:5], label="Test Cuda", marker="o", color="b")
+
+    plt.xlabel("Test files")
+    plt.ylabel("Time")
+    plt.title("Confronto dei tempi tra Sequential e Cuda (Small Test)")
+    plt.grid(True, linestyle="--", alpha=0.6)
+    plt.legend()
+
+    plt.savefig(
+        "test_csv/plots/plot_cuda_small_slurm.png",
+        dpi=300,
+        bbox_inches="tight",
+    )
+    plt.clf()
+
+    plt.figure(figsize=(10, 6))
+
+    plt.plot(big_test, seq_times[5:], label="Test Sequential", marker="s", color="r")
+    plt.plot(big_test, cuda_times[5:], label="Test Cuda", marker="o", color="b")
+
+    plt.xlabel("Test files")
+    plt.ylabel("Time")
+    plt.title("Confronto dei tempi tra Sequential e Cuda (Big Test)")
+    plt.grid(True, linestyle="--", alpha=0.6)
+    plt.legend()
+
+    plt.savefig(
+        "test_csv/plots/plot_cuda_big_slurm.png",
+        dpi=300,
+        bbox_inches="tight",
+    )
+    plt.clf()
+
 
 def gen_plot():
     # Calculate efficency of omp_mpi version
     seq_times = take_time("test_csv/slurm/seq_slurm.csv")
 
-    omp_mpi(seq_times)
+    # omp_mpi(seq_times)
     cuda(seq_times)
+
+
+if __name__ == "__main__":
+    gen_plot()
