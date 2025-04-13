@@ -218,7 +218,12 @@ void writeCompTimeToFile(char *filename, float value) {
 int main(int argc, char* argv[])
 {
 	/* 0. Initialize MPI */
-	MPI_Init( &argc, &argv );
+  int provided;
+  MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &provided);
+  if (provided < MPI_THREAD_FUNNELED) {
+          printf("Errore: il supporto ai thread non è sufficiente\n");
+          MPI_Abort(MPI_COMM_WORLD, 1);
+  }
 	int rank;
 	MPI_Comm_rank( MPI_COMM_WORLD, &rank );
 	MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
@@ -483,7 +488,7 @@ int main(int argc, char* argv[])
 	//END CLOCK*****************************************
 	end = MPI_Wtime();
 	printf("\nComputation of rank %d: %f seconds", rank, end - start);
-  	if (rank == 0) writeCompTimeToFile(argv[7], end - start);
+  if (rank == 0) writeCompTimeToFile(argv[7], end - start);
 	fflush(stdout);
 
 	// Synchronize all processes

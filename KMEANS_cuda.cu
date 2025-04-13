@@ -462,7 +462,7 @@ int main(int argc, char* argv[])
   dim3 blockSize(256);
   dim3 numBlocks(ceil(static_cast<double>(lines) / blockSize.x));
 
-  dim3 blockSize_K(32);
+  dim3 blockSize_K(64);
   dim3 numBlocks2(ceil(static_cast<double>(K) / blockSize.x));
 
 	do {
