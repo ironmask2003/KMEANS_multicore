@@ -28,6 +28,27 @@ def addAvgTime(test_type, avgTimes):
     )
 
 
+def addAvgTimeCuda(test_type: str, avgTimes: list[float], t_block: int):
+    # Check if the path not exist
+    if not os.path.exists(f"./test_csv/slurm/{test_type}_slurm.csv"):
+        os.makedirs("./test_csv/slurm", exist_ok=True)
+        # Create the file and write the header
+        open(f"./test_csv/slurm/{test_type}_slurm.csv", "w").close()
+        subprocess.run(
+            [
+                f"echo Thread per blocco, AvgTime2D2, AvgTime10D, AvgTime20D, AvgTime2D, AvgTime100D, AvgTime100D2, AvgTime100D_200K, AvgTime100D_400K, AvgTime100D_800K, AvgTime100D_1000K >> ./test_csv/slurm/{test_type}_slurm.csv"
+            ],
+            shell=True,
+        )
+
+    subprocess.run(
+        [
+            f"echo {t_block}, {avgTimes[0]}, {avgTimes[1]}, {avgTimes[2]}, {avgTimes[3]}, {avgTimes[4]}, {avgTimes[5]}, {avgTimes[6]}, {avgTimes[7]}, {avgTimes[8]}, {avgTimes[9]} >> ./test_csv/slurm/{test_type}_slurm.csv"
+        ],
+        shell=True,
+    )
+
+
 def addAvgTime_omp_mpi(test_type, avgTimes, pcs, thread):
     # Check if the path not exist
     if not os.path.exists(f"./test_csv/slurm/{test_type}_{pcs}_slurm.csv"):
@@ -53,6 +74,47 @@ class MyTest(unittest.TestCase):
     def doTest(self, vers: str, test: str, pcs: int, thread: int):
         self.assertEqual(main(vers, test, pcs, thread), True)
 
+    def run_tests(self, dim: str, vers: str, pcs: int, thread: int) -> float:
+        # Remove comp_time files if exist
+        if os.path.exists(f"./comp_time/{vers}/comp_time{dim}.csv"):
+            os.remove(f"./comp_time/{vers}/comp_time{dim}.csv")
+
+        # Create comp_time files
+        open(f"./comp_time/{vers}/comp_time{dim}.csv", "w").close()
+
+        print(f"Start testing with {dim}")
+        print("-----------------------------------------")
+        for _ in range(25):
+            self.doTest(vers, dim, pcs, thread)
+            print("Test done successfully")
+            print("-----------------------------------------")
+
+        times = []
+
+        # Open comp_time file and read all lines
+        with open(f"./comp_time/{vers}/comp_time{dim}.csv", "r") as f:
+            times = f.readlines()
+
+        # Convert all element in the array to float
+        times = [float(time) for time in times]
+
+        # AvgTime
+        avgTime = sum(times) / len(times)
+        return avgTime
+
+    def run_cuda(self, dimensions: list[str], vers: str):
+        t_blocks = [256, 512, 1024]
+
+        for tb in t_blocks:
+            print(f"Test with {tb} thread per block")
+            print("-----------------------------------------")
+            avgTimes = []
+            for dim in dimensions:
+                avgTimes.append(self.run_tests(dim, vers, 0, tb))
+
+            addAvgTimeCuda(vers, avgTimes, tb)
+            print("-----------------------------------------")
+
     def run_omp_mpi(self, dimensions: list[str], vers: str):
         processes = [2, 4, 8]
         threads = [1]
@@ -65,32 +127,7 @@ class MyTest(unittest.TestCase):
                 # Test with 2D2 and 100D_1000K
                 if dim != "2D2" and dim != "100D_1000K":
                     continue
-                # Remove comp_time files if exist
-                if os.path.exists(f"./comp_time/{vers}/comp_time{dim}.csv"):
-                    os.remove(f"./comp_time/{vers}/comp_time{dim}.csv")
-
-                # Create comp_time files
-                open(f"./comp_time/{vers}/comp_time{dim}.csv", "w").close()
-
-                print(f"Start testing with {dim}")
-                print("-----------------------------------------")
-                for _ in range(25):
-                    self.doTest(vers, dim, pcs, thread)
-                    print("Test done successfully")
-                    print("-----------------------------------------")
-
-                times = []
-
-                # Open comp_time file and read all lines
-                with open(f"./comp_time/{vers}/comp_time{dim}.csv", "r") as f:
-                    times = f.readlines()
-
-                # Convert all element in the array to float
-                times = [float(time) for time in times]
-
-                # AvgTime
-                avgTime = sum(times) / len(times)
-                avgTimes.append(avgTime)
+                avgTimes.append(self.run_tests(dim, vers, pcs, thread))
 
             # Generate median and time distribution plot
             time_distribution(vers, pcs)
@@ -108,32 +145,7 @@ class MyTest(unittest.TestCase):
 
         # iterate over all test file
         for dim in dimensions:
-            # Remove comp_time files if exist
-            if os.path.exists(f"./comp_time/{vers}/comp_time{dim}.csv"):
-                os.remove(f"./comp_time/{vers}/comp_time{dim}.csv")
-
-            # Create comp_time files
-            open(f"./comp_time/{vers}/comp_time{dim}.csv", "w").close()
-
-            print(f"Start testing with {dim}")
-            print("-----------------------------------------")
-            for _ in range(25):
-                self.doTest(vers, dim, 0, 0)
-                print("Test done successfully")
-                print("-----------------------------------------")
-
-            times = []
-
-            # Open comp_time file and read all lines
-            with open(f"./comp_time/{vers}/comp_time{dim}.csv", "r") as f:
-                times = f.readlines()
-
-            # Convert all element in the array to float
-            times = [float(time) for time in times]
-
-            # AvgTime
-            avgTime = sum(times) / len(times)
-            avgTimes.append(avgTime)
+            avgTimes.append(self.run_tests(dim, vers, 0, 0))
 
         addAvgTime(vers, avgTimes)
         print("-----------------------------------------")

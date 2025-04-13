@@ -17,6 +17,23 @@ def take_time(filename):
     return times
 
 
+def take_time_cuda():
+    times = {256: [], 512: [], 1024: []}
+    # Open csv file
+    with open("test_csv/slurm/cuda_slurm.csv", "r") as csvfile:
+        csvreader = csv.reader(csvfile)
+        # Skip header
+        csvreader.__next__()
+        for row in csvreader:
+            t_block = 0
+            for num in range(len(row)):
+                if num == 0:
+                    t_block = int(row[num])
+                else:
+                    times[t_block].append(float(row[num]))
+    return times
+
+
 # Function used to take all times from omp_mpi file .csv with process defined in input of the function
 def take_time_omp_mpi(num_process):
     times = {1: [], 2: [], 4: [], 8: []}
@@ -199,7 +216,7 @@ def omp_mpi(seq_times):
 
 
 def cuda(seq_times):
-    cuda_times = take_time("test_csv/slurm/cuda_slurm.csv")
+    cuda_times = take_time_cuda()
 
     tests = [
         "2D2input.inp",
@@ -230,58 +247,36 @@ def cuda(seq_times):
         "1000Kinput.inp",
     ]
 
-    speedup = []
+    speedup = {256: [], 512: [], 1024: []}
 
-    for test in range(len(tests)):
-        speedup.append(calculate_eff(1, 1, seq_times[test], cuda_times[test]))
+    for t_blocks in speedup.keys():
+        for test in range(len(tests)):
+            speedup[t_blocks].append(
+                calculate_eff(1, 1, seq_times[test], cuda_times[t_blocks][test])
+            )
 
-    plt.figure(figsize=(15, 6))
-    plt.scatter(tests, speedup, marker="D", s=80, color="b")
+    datas = {
+        "100D_200Kinput.inp": [],
+        "100D_400Kinput.inp": [],
+        "100D_800Kinput.inp": [],
+        "100D_1000Kinput.inp": [],
+    }
+
+    for test in range(6, len(tests)):
+        data = []
+        for t_blocks in speedup.keys():
+            data.append(speedup[t_blocks][test])
+        datas[tests[test]] = data
 
     # Personalizza il grafico
-    plt.xlabel("Test")
+    plt.xlabel("Thread per blocco")
+    plt.xticks(speedup.keys(), speedup.keys())  # Mostra solo i valori specificati
     plt.ylabel("Speedup")
     plt.title("Tempi di esecuzione dei test")
     plt.grid(True, linestyle="--", alpha=0.6)
 
     plt.savefig(
-        "test_csv/plots/speedup/plot_cuda_slurm.png",
-        dpi=300,
-        bbox_inches="tight",
-    )
-    plt.clf()
-
-    plt.figure(figsize=(10, 6))
-
-    plt.plot(small_test, seq_times[:5], label="Test Sequential", marker="s", color="r")
-    plt.plot(small_test, cuda_times[:5], label="Test Cuda", marker="o", color="b")
-
-    plt.xlabel("Test files")
-    plt.ylabel("Time")
-    plt.title("Confronto dei tempi tra Sequential e Cuda (Small Test)")
-    plt.grid(True, linestyle="--", alpha=0.6)
-    plt.legend()
-
-    plt.savefig(
-        "test_csv/plots/plot_cuda_small_slurm.png",
-        dpi=300,
-        bbox_inches="tight",
-    )
-    plt.clf()
-
-    plt.figure(figsize=(10, 6))
-
-    plt.plot(big_test, seq_times[5:], label="Test Sequential", marker="s", color="r")
-    plt.plot(big_test, cuda_times[5:], label="Test Cuda", marker="o", color="b")
-
-    plt.xlabel("Test files")
-    plt.ylabel("Time")
-    plt.title("Confronto dei tempi tra Sequential e Cuda (Big Test)")
-    plt.grid(True, linestyle="--", alpha=0.6)
-    plt.legend()
-
-    plt.savefig(
-        "test_csv/plots/plot_cuda_big_slurm.png",
+        "test_csv/plots/speedup/plot_cuda_big_slurm.png",
         dpi=300,
         bbox_inches="tight",
     )
