@@ -42,38 +42,36 @@ def calculate_eff(num_process, num_thread, seq_time, omp_mpi_time):
 
 
 def omp_mpi(seq_times):
-    process = [2, 4, 8]
+    process = [2]
+    threads = [1, 2, 4, 8]
+
     tests = [
-        "2D2",
-        "10D",
-        "20D",
-        "2D",
-        "100D",
-        "100D2",
-        "100D_200K",
-        "100D_400K",
-        "100D_800K",
-        "100D_1000K",
+        "2D2input.inp",
+        "10Dinput.inp",
+        "20Dinput.inp",
+        "2Dinput.inp",
+        "100Dinput.inp",
+        "100D2input.inp",
+        "100D_200Kinput.inp",
+        "100D_400Kinput.inp",
+        "100D_800Kinput.inp",
+        "100D_1000Kinput.inp",
     ]
 
-    times_omp_mpi = {2: {}, 4: {}, 8: {}}
+    times_omp_mpi = {2: {}}
     for pcs in process:
         times_omp_mpi[pcs] = take_time_omp_mpi(pcs)
 
     effs = {
         2: {1: [], 2: [], 4: [], 8: []},
-        4: {1: [], 2: [], 4: [], 8: []},
-        8: {1: [], 2: [], 4: []},
     }
 
     speedup = {
         2: {1: [], 2: [], 4: [], 8: []},
-        4: {1: [], 2: [], 4: [], 8: []},
-        8: {1: [], 2: [], 4: []},
     }
 
-    for pcs in effs.keys():
-        for thread in times_omp_mpi[pcs].keys():
+    for pcs in process:
+        for thread in threads:
             for test in range(len(tests)):
                 effs[pcs][thread].append(
                     calculate_eff(
@@ -86,30 +84,22 @@ def omp_mpi(seq_times):
                     )
                 )
 
-    threads = [1, 2, 4, 8]
-
     for pcs in process:
         datas = {
-            "2D2input.inp": [],
-            "10Dinput.inp": [],
-            "20Dinput.inp": [],
-            "2Dinput.inp": [],
-            "100Dinput.inp": [],
-            "100D2input.inp": [],
             "100D_200Kinput.inp": [],
             "100D_400Kinput.inp": [],
             "100D_800Kinput.inp": [],
             "100D_1000Kinput.inp": [],
         }
 
-        for test in range(len(tests)):
+        for test in range(6, len(tests)):
             data = []
-            for thread in times_omp_mpi[pcs].keys():
+            for thread in threads:
                 data.append(speedup[pcs][thread][test])
             datas[tests[test]] = data
 
-        markers = ["o", "s", "D", "^", "v", ">", "<", "p", "*"]
-        colors = ["b", "g", "r", "c", "m", "y", "k", "#FF5733", "#33FF57"]
+        markers = ["o", "s", "D", "^", "v", ">", "<", "p", "*", "X"]
+        colors = ["b", "g", "r", "c", "m", "y", "k", "#FF5733", "#33FF57", "#5733FF"]
 
         cont = 0
         plt.figure(figsize=(10, 6))
@@ -122,20 +112,36 @@ def omp_mpi(seq_times):
                 color=colors[cont],
                 label=f"{i}",
             )
+
+            # Aggiunge l'etichetta del valore solo al file input desiderato
+            if i == "100D_1000Kinput.inp":
+                # Aggiunta delle etichette vicino ad ogni punto
+                for x, y in zip(threads, dt):
+                    plt.text(
+                        x,
+                        y + 0.4,
+                        f"{y:.1f}",
+                        ha="center",
+                        fontsize=8,
+                        color=colors[cont],
+                    )
             cont += 1
 
         # Personalizza il grafico
         plt.xscale("log", base=2)  # Scala logaritmica per il numero di thread
         plt.xticks(threads, threads)  # Mostra solo i valori specificati
-        plt.ylim(0, 80)  # Limiti asse Y
+        plt.ylim(0, 16)  # Limiti asse Y
         plt.xlabel("Number of Threads")
         plt.ylabel("Speedup")
         plt.title(f"Speedup with MPI Processes = {pcs}")
         plt.grid(True, linestyle="--", alpha=0.6)
+
+        plt.axhline(y=1, color="black", linestyle="dashed", label="Sequential baseline")
+
         plt.legend()
 
         plt.savefig(
-            f"test_csv/plots/speedup/plot_omp_mpi_{pcs}_slurm.png",
+            f"test_csv/plots/speedup/plot_omp_mpi_{pcs}_big_slurm.png",
             dpi=300,
             bbox_inches="tight",
         )
@@ -149,20 +155,16 @@ def omp_mpi(seq_times):
             "2Dinput.inp": [],
             "100Dinput.inp": [],
             "100D2input.inp": [],
-            "100D_200Kinput.inp": [],
-            "100D_400Kinput.inp": [],
-            "100D_800Kinput.inp": [],
-            "100D_1000Kinput.inp": [],
         }
 
-        for test in range(len(tests)):
+        for test in range(len(tests) - 4):
             data = []
             for thread in times_omp_mpi[pcs].keys():
                 data.append(effs[pcs][thread][test])
             datas[tests[test]] = data
 
-        markers = ["o", "s", "D", "^", "v", ">", "<", "p", "*"]
-        colors = ["b", "g", "r", "c", "m", "y", "k", "#FF5733", "#33FF57"]
+        markers = ["o", "s", "D", "^", "v", ">", "<", "p", "*", "X"]
+        colors = ["b", "g", "r", "c", "m", "y", "k", "#FF5733", "#33FF57", "#5733FF"]
 
         cont = 0
         plt.figure(figsize=(10, 6))
@@ -180,15 +182,16 @@ def omp_mpi(seq_times):
         # Personalizza il grafico
         plt.xscale("log", base=2)  # Scala logaritmica per il numero di thread
         plt.xticks(threads, threads)  # Mostra solo i valori specificati
-        plt.ylim(0, 1)  # Limiti asse Y
+        plt.ylim(0, 1.05)  # Limiti asse Y
         plt.xlabel("Number of Threads")
         plt.ylabel("Efficiency")
         plt.title(f"Efficiency with MPI Processes = {pcs}")
         plt.grid(True, linestyle="--", alpha=0.6)
+        plt.axhline(y=1, color="black", linestyle="dashed", label="Ideal efficiency")
         plt.legend()
 
         plt.savefig(
-            f"test_csv/plots/efficency/plot_omp_mpi_{pcs}_slurm.png",
+            f"test_csv/plots/efficency/plot_omp_mpi_{pcs}_small_slurm.png",
             dpi=300,
             bbox_inches="tight",
         )
@@ -289,8 +292,8 @@ def gen_plot():
     # Calculate efficency of omp_mpi version
     seq_times = take_time("test_csv/slurm/seq_slurm.csv")
 
-    # omp_mpi(seq_times)
-    cuda(seq_times)
+    omp_mpi(seq_times)
+    # cuda(seq_times)
 
 
 if __name__ == "__main__":

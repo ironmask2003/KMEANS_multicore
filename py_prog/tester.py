@@ -3,7 +3,7 @@ import os
 import subprocess
 
 from run import main
-from gen_plots import gen_plot
+from time_distribution import time_distribution
 
 
 # Function used to add AvgTime to csv file
@@ -55,15 +55,16 @@ class MyTest(unittest.TestCase):
 
     def run_omp_mpi(self, dimensions: list[str], vers: str):
         processes = [2, 4, 8]
-        threads = [1, 2, 4, 8]
+        threads = [1]
 
         for pcs, thread in [(p, t) for p in processes for t in threads]:
-            if pcs == 8 and thread > 4:
-                continue
             print(f"Test with {pcs} process and {thread} thread")
             print("-----------------------------------------")
             avgTimes = []
             for dim in dimensions:
+                # Test with 2D2 and 100D_1000K
+                if dim != "2D2" and dim != "100D_1000K":
+                    continue
                 # Remove comp_time files if exist
                 if os.path.exists(f"./comp_time/{vers}/comp_time{dim}.csv"):
                     os.remove(f"./comp_time/{vers}/comp_time{dim}.csv")
@@ -75,6 +76,8 @@ class MyTest(unittest.TestCase):
                 print("-----------------------------------------")
                 for _ in range(25):
                     self.doTest(vers, dim, pcs, thread)
+                    print("Test done successfully")
+                    print("-----------------------------------------")
 
                 times = []
 
@@ -89,7 +92,10 @@ class MyTest(unittest.TestCase):
                 avgTime = sum(times) / len(times)
                 avgTimes.append(avgTime)
 
-            addAvgTime_omp_mpi(vers, avgTimes, pcs, thread)
+            # Generate median and time distribution plot
+            time_distribution(vers, pcs)
+
+            # addAvgTime_omp_mpi(vers, avgTimes, pcs, thread)
             print("-----------------------------------------")
 
     def main_test(self, dimensions: list[str], vers: str):
@@ -150,29 +156,25 @@ class MyTest(unittest.TestCase):
         skip_cuda = input("Do you want to skip the test with CUDA code? (y/n): ")
         skip_omp_mpi = input("Do you want to skip the test with OMP_MPI code? (y/n): ")
 
-        if skip_seq == "y":
+        if skip_seq == "n":
             print("Running sequential test")
             print("-----------------------------------------")
             subprocess.run(["make", "KMEANS_seq"])
             self.main_test(dimensions, "seq")
 
-        if skip_cuda == "y":
+        if skip_cuda == "n":
             print("Running CUDA test")
             print("-----------------------------------------")
             subprocess.run(["make", "KMEANS_cuda"])
             self.main_test(dimensions, "cuda")
 
-        if skip_omp_mpi == "y":
+        if skip_omp_mpi == "n":
             print("Running OMP test")
             print("-----------------------------------------")
             subprocess.run(["make", "KMEANS_omp_mpi"])
             self.main_test(dimensions, "omp_mpi")
 
         subprocess.run(["make", "clean"])
-
-        print("Generating plots")
-        print("-----------------------------------------")
-        gen_plot()
 
 
 if __name__ == "__main__":

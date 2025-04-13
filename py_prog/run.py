@@ -5,6 +5,14 @@ import time
 
 # Function used to check if two file are equal
 def check_file(file1: str, file2: str) -> bool:
+    """
+    Function to check if two files are equal.
+    :param
+        - file1: Path to the first file.
+        - file2: Path to the second file.
+    :return
+        - boolean: True if the files are equal, False otherwise.
+    """
     with open(file1, "r") as f1, open(file2, "r") as f2:
         for line1, line2 in zip(f1, f2):
             if line1 != line2:
@@ -42,12 +50,13 @@ def format_omp_mpi(pcs: int, threads: int, test: str) -> str:
 #SBATCH --time=01:00:00                       # Max runtime (adjust as needed)
 #SBATCH --ntasks={pcs}
 #SBATCH --cpus-per-task={threads}
+#SBATCH --partition=multicore
 
 # Run the job using MPI
 export OMP_NUM_THREADS={threads}
 export OMPI_MCA_btl_tcp_if_include=ibp129s0
 
-srun --mpi=pmix ./KMEANS_omp_mpi test_files/input{test}.inp 40 100 1 0.0001 output_files/omp_mpi/output{test}.txt comp_time/omp_mpi/comp_time{test}.csv ${threads}
+srun --mpi=pmix ./KMEANS_omp_mpi test_files/input{test}.inp 40 100 1 0.0001 output_files/omp_mpi/output{test}.txt comp_time/omp_mpi/comp_time{test}.csv {threads}
     """
 
 
@@ -112,7 +121,3 @@ def main(vers: str, test: str, pcs: int, thread: int):
         f"output_files/seq/output{test}.txt",
         f"output_files/{vers}/output{test}.txt",
     )
-
-
-if __name__ == "__main__":
-    main("omp_mpi", "100D2", 8, 32)
