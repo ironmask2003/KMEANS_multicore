@@ -117,7 +117,7 @@ class MyTest(unittest.TestCase):
 
     def run_omp_mpi(self, dimensions: list[str], vers: str):
         processes = [2, 4, 8]
-        threads = [1]
+        threads = [1, 2, 4, 8]
 
         for pcs, thread in [(p, t) for p in processes for t in threads]:
             print(f"Test with {pcs} process and {thread} thread")
@@ -139,6 +139,9 @@ class MyTest(unittest.TestCase):
         # Check the version of the program to run
         if vers == "omp_mpi":
             self.run_omp_mpi(dimensions, vers)
+            return
+        elif vers == "cuda":
+            self.run_cuda(dimensions, vers)
             return
         # Array of avgTime for each test
         avgTimes = []

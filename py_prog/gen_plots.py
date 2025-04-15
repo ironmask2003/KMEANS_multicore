@@ -1,5 +1,6 @@
 import csv
 from matplotlib import pyplot as plt
+import numpy as np
 
 
 # Function used to take all times from seq file .csv
@@ -225,26 +226,10 @@ def cuda(seq_times):
         "20Dinput.inp",
         "100Dinput.inp",
         "100D2input.inp",
-        "200Kinput.inp",
-        "400Kinput.inp",
-        "800Kinput.inp",
-        "1000Kinput.inp",
-    ]
-
-    small_test = [
-        "2D2input.inp",
-        "10Dinput.inp",
-        "2Dinput.inp",
-        "20Dinput.inp",
-        "100Dinput.inp",
-    ]
-
-    big_test = [
-        "100D2input.inp",
-        "200Kinput.inp",
-        "400Kinput.inp",
-        "800Kinput.inp",
-        "1000Kinput.inp",
+        "100D_200Kinput.inp",
+        "100D_400Kinput.inp",
+        "100D_800Kinput.inp",
+        "100D_1000Kinput.inp",
     ]
 
     speedup = {256: [], 512: [], 1024: []}
@@ -256,27 +241,50 @@ def cuda(seq_times):
             )
 
     datas = {
-        "100D_200Kinput.inp": [],
-        "100D_400Kinput.inp": [],
-        "100D_800Kinput.inp": [],
-        "100D_1000Kinput.inp": [],
+        "2D2input.inp": [],
+        "10Dinput.inp": [],
+        "2Dinput.inp": [],
+        "20Dinput.inp": [],
+        "100Dinput.inp": [],
+        "100D2input.inp": [],
     }
 
-    for test in range(6, len(tests)):
+    t_blocks = [256, 512, 1024]
+
+    for test in range(len(tests) - 4):
         data = []
-        for t_blocks in speedup.keys():
-            data.append(speedup[t_blocks][test])
+        for t_block in t_blocks:
+            data.append(speedup[t_block][test])
         datas[tests[test]] = data
 
+    markers = ["o", "s", "D", "^", "v", ">", "<", "p", "*", "X"]
+    colors = ["b", "g", "r", "c", "m", "y", "k", "#FF5733", "#33FF57", "#5733FF"]
+
+    cont = 0
+    plt.figure(figsize=(10, 6))
+    for i, dt in datas.items():
+        plt.plot(
+            t_blocks,
+            dt,
+            marker=markers[cont],
+            linestyle="-",
+            color=colors[cont],
+            label=f"{i}",
+        )
+        cont += 1
+
     # Personalizza il grafico
-    plt.xlabel("Thread per blocco")
-    plt.xticks(speedup.keys(), speedup.keys())  # Mostra solo i valori specificati
-    plt.ylabel("Speedup")
-    plt.title("Tempi di esecuzione dei test")
+    plt.xscale("log", base=2)  # Scala logaritmica per il numero di thre
+    plt.xticks(t_blocks, t_blocks)  # Mostra solo i valori specificati
+    plt.xlabel("Thread for blocks")
+    plt.ylabel("speedup")
+    plt.title("Speedup with CUDA")
     plt.grid(True, linestyle="--", alpha=0.6)
+    plt.axhline(y=1, color="black", linestyle="dashed", label="Squential baseline")
+    plt.legend()
 
     plt.savefig(
-        "test_csv/plots/speedup/plot_cuda_big_slurm.png",
+        "test_csv/plots/speedup/plot_cuda_small_slurm.png",
         dpi=300,
         bbox_inches="tight",
     )
@@ -287,9 +295,61 @@ def gen_plot():
     # Calculate efficency of omp_mpi version
     seq_times = take_time("test_csv/slurm/seq_slurm.csv")
 
-    omp_mpi(seq_times)
-    # cuda(seq_times)
+    vers = input("Inserisci la versione da plottare (omp_mpi/cuda): ")
+    omp_mpi(seq_times) if vers == "omp_mpi" else cuda(seq_times)
+
+
+def roof():
+    # Roofline params
+    peak_perf = 16300  # GFLOPs/s (compute roof)
+    peak_bandwidth = 672  # GB/s (memory roof)
+
+    # Operational Intensity range (log scale)
+    oi = np.logspace(-2, 4, 100)
+    roof = np.minimum(peak_perf, peak_bandwidth * oi)
+
+    # Punto misurato
+    your_oi = 0.722  # FLOPs/Byte
+    your_perf = 97.93  # GFLOPs/s
+
+    perf_256 = 87.81  # GFLOPs/s
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(oi, roof, label="Roofline", color="black", linewidth=2)
+    plt.scatter(
+        your_oi,
+        perf_256,
+        color="green",
+        label="Assign centroids with 256 blocks",
+        zorder=5,
+    )
+    plt.scatter(
+        your_oi,
+        your_perf,
+        color="red",
+        label="Assign centroids with 512 blocks",
+        zorder=5,
+    )
+
+    plt.axhline(peak_perf, color="gray", linestyle="--", label="Compute Roof")
+    plt.axvline(
+        peak_perf / peak_bandwidth, color="blue", linestyle="--", label="Balance Point"
+    )
+
+    plt.xscale("log")
+    plt.yscale("log")
+    plt.xlabel("Operational Intensity [FLOPs/Byte]")
+    plt.ylabel("Performance [GFLOPs/s]")
+    plt.title("Roofline Model – Quadro RTX 6000")
+    plt.legend()
+    plt.grid(True, which="both", linestyle="--", alpha=0.5)
+    plt.tight_layout()
+    plt.savefig(
+        "test_csv/plots/roofline_cuda.png",
+        dpi=300,
+        bbox_inches="tight",
+    )
 
 
 if __name__ == "__main__":
-    gen_plot()
+    roof()
