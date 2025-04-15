@@ -317,11 +317,12 @@ int main(int argc, char* argv[])
 	*          algorithm stops.
 	* argv[6]: Output file. Class assigned to each point of the input file.
   * argv[7]: File where save the computation time
+  * argv[8]: Number of threads per block
 	* */
-	if(argc !=  8)
+	if(argc !=  9)
 	{
 		fprintf(stderr,"EXECUTION ERROR K-MEANS: Parameters are not correct.\n");
-		fprintf(stderr,"./KMEANS [Input Filename] [Number of clusters] [Number of iterations] [Number of changes] [Threshold] [Output data file] [Computation time file] \n");
+		fprintf(stderr,"./KMEANS [Input Filename] [Number of clusters] [Number of iterations] [Number of changes] [Threshold] [Output data file] [Computation time file] [Threds per block]\n");
 		fflush(stderr);
 		exit(-1);
 	}
@@ -458,10 +459,11 @@ int main(int argc, char* argv[])
  *
  */
 
-  // Set of the grid and block dimensions
-  dim3 blockSize(256);
+  // Set of the grid and block dimensions used for the assign_centroids kernel
+  dim3 blockSize(atoi(argv[8]));
   dim3 numBlocks(ceil(static_cast<double>(lines) / blockSize.x));
 
+  // Set of the grid and block dimensions used for the max_step kernel
   dim3 blockSize_K(64);
   dim3 numBlocks2(ceil(static_cast<double>(K) / blockSize.x));
 
